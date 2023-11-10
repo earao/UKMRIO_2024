@@ -36,17 +36,17 @@ ons_filepath = wd + 'data/raw/ONS/'
 iea_filepath = wd + 'data/raw/IEA/'
 uk_energy_filepath = wd + 'data/processed/uk energy/'
 inputs_filepath = wd + 'data/model_inputs/'
-results_filepath = wd + 'outputs/results_2023/'
-ons_name = 'SU_114_BB22_1997-2020.xlsx'
-ons_year = '2023'
+results_filepath = wd + 'temp_anne_outputs/results_2024/'
+ons_name = 'SU_114 ITR 9 A 1997-2021.xlsx'
+ons_year = '2024'
 exiobase_filepath = wd + 'EXIOBASE/'
 edgar_filepath = wd + 'data/raw/EDGAR/'
 
 ayears = np.array([1990,1995,2005,2010,2013,2014,2015])
 oldyrs = np.array(range(1990,1997))
-exioyrs = np.array(range(1995,2021))
-newyrs = np.array(range(1997,2021))
-yrs = np.array(range(1990,2021))
+exioyrs = np.array(range(1995,2022))
+newyrs = np.array(range(1997,2022))
+yrs = np.array(range(1990,2022))
 
 (n_supply,n_use,n_final_demand,n_exports,dom_use,com_use,conc) = ons.load_io_data(wd, ons_filepath,newyrs,ons_year,ons_name)
 (o_supply,o_use,o_final_demand,o_exports) = ons.load_old_io_data(ons_filepath)
