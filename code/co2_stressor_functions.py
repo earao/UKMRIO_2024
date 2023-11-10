@@ -15,7 +15,7 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def make_exio382_stressor(use,exioyrs,exiobase_filepath,meta,c_conc,i_conc): # used in ukmrio_main_2023
+def make_exio382_stressor(use,exioyrs,exiobase_filepath,meta,c_conc,i_conc): # used in ukmrio_main_2024
 
     exioCO2 = {}
     exioGHG = {}
@@ -66,7 +66,7 @@ def make_exio382_stressor(use,exioyrs,exiobase_filepath,meta,c_conc,i_conc): # u
         
     return(exioCO2,exioGHG)
 
-def make_old_exio_stressor_382(exioCO2,exioGHG,edgar_filepath,regions): # used in ukmrio_main_2023
+def make_old_exio_stressor_382(exioCO2,exioGHG,edgar_filepath,regions): # used in ukmrio_main_2024
         
     file = os.path.join(edgar_filepath, 'v432_CO2_excl_short-cycle_org_C_1970_2012.xlsx')
     oldCO2prop = pd.read_excel(file, 'CO2_props',index_col = 0)
@@ -86,22 +86,22 @@ def make_old_exio_stressor_382(exioCO2,exioGHG,edgar_filepath,regions): # used i
         
     return (exioCO2,exioGHG)
 
-def make_UK_emissions(ons_filepath,yrs): # used in ukmrio_main_2023
+def make_UK_emissions(ons_filepath,yrs): # used in ukmrio_main_2024
     
     emissionsyrs = np.array([int(x) for x in range(1990,2021)])
     
-    file = os.path.join(ons_filepath, 'ONS environmental accounts/2023/atmosphericemissionsghg-7.xlsx')
+    file = os.path.join(ons_filepath, 'ONS environmental accounts/2024/atmosphericemissionsghg.xlsx')
     
-    uk_ghg_sectors = pd.read_excel(file, 'GHG total', usecols='C:AH', index_col=0, header=0, nrows=131, skiprows = 29)
-    uk_co2_sectors = pd.read_excel(file, 'CO2', usecols='C:AH', index_col=0, header=0, nrows=131, skiprows = 29)
+    uk_ghg_sectors = pd.read_excel(file, 'GHG total', usecols='C:AI', index_col=0, header=0, nrows=131, skiprows = 29)
+    uk_co2_sectors = pd.read_excel(file, 'CO2', usecols='C:AI', index_col=0, header=0, nrows=131, skiprows = 29)
     uk_ghg_sectors.columns = emissionsyrs
     uk_co2_sectors.columns = emissionsyrs
-    uk_ghg_direct = uk_ghg_sectors.iloc[129:131,0:31]
-    uk_co2_direct = uk_co2_sectors.iloc[129:131,0:31]
+    uk_ghg_direct = uk_ghg_sectors.iloc[129:131,0:32]
+    uk_co2_direct = uk_co2_sectors.iloc[129:131,0:32]
          
     return (uk_ghg_sectors,uk_co2_sectors,uk_ghg_direct,uk_co2_direct) 
 
-def make_co2_382(exioCO2,uk_co2_sectors,ons_filepath,yrs,meta): # used in ukmrio_main_2023
+def make_co2_382(exioCO2,uk_co2_sectors,ons_filepath,yrs,meta): # used in ukmrio_main_2024
     
     co2 = {}
         
@@ -119,7 +119,7 @@ def make_co2_382(exioCO2,uk_co2_sectors,ons_filepath,yrs,meta): # used in ukmrio
     
     return(co2)
  
-def make_ghg_382(exioGHG,uk_ghg_sectors,ons_filepath,yrs,meta): # used in ukmrio_main_2023
+def make_ghg_382(exioGHG,uk_ghg_sectors,ons_filepath,yrs,meta): # used in ukmrio_main_2024
     
     ghg = {}
         
