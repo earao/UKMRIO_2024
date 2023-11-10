@@ -17,7 +17,7 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def get_exiobase382(use,supply,exioyrs,meta,c_conc,i_conc,p_conc, exiobase_filepath): # used in ukmrio_main_2023
+def get_exiobase382(use,supply,exioyrs,meta,c_conc,i_conc,p_conc, exiobase_filepath): # used in ukmrio_main_2024
 
     S = {}
     U = {}
@@ -65,6 +65,8 @@ def get_exiobase382(use,supply,exioyrs,meta,c_conc,i_conc,p_conc, exiobase_filep
     
                       
     for a in range(0,len(exioyrs)):
+        
+        print(a)
                       
         filepath = exiobase_filepath + "3.8.2/MRSUT_{}/".format(str(exioyrs[a]))
                 
