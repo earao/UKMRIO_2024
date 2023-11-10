@@ -129,7 +129,7 @@ for yr in range(1990, 1996):
 fullexioNRG = energy.iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,shipping)
 exioNRG = energy.uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc) 
 uk_nrg_direct = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'direct')
-nrg = energy.make_nrg_2023(uk_energy_filepath,exioNRG,S,yrs,meta)
+nrg = energy.make_nrg(uk_energy_filepath,exioNRG,S,yrs,meta)
        
 #make material stressors
 exioMAT = mat.make_exio_stressor_382(mat_filepath,yrs)

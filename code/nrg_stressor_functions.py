@@ -15,20 +15,20 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def make_IEA_data(iea_filepath): # used in ukmrio_main_2023
+def make_IEA_data(iea_filepath): # used in ukmrio_main_2024
      
-    filepath = iea_filepath + "Extended energy balances/2020/"
+    filepath = iea_filepath + "Extended energy balances/2021/"
     
     aviation = pd.read_csv(os.path.join(filepath, 'aviation.csv'),encoding='latin-1', header = 0, index_col = 0)
     shipping = pd.read_csv(os.path.join(filepath, 'shipping.csv'),encoding='latin-1', header = 0, index_col = 0)
-    iea_fe_data = pd.read_csv(os.path.join(filepath, 'iea_fe_1990_2020.csv'),encoding='latin-1', header = 0, index_col = [0,1])
+    iea_fe_data = pd.read_csv(os.path.join(filepath, 'iea_fe_1990_2021.csv'),encoding='latin-1', header = 0, index_col = [0,1])
     iea_fe_data=iea_fe_data.replace('x',0)
     iea_fe_data=iea_fe_data.replace('..',0)
     iea_fe_data=iea_fe_data.replace(' ',0)
               
     return (iea_fe_data,aviation,shipping)
 
-def iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,shipping): # used in ukmrio_main_2023
+def iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,shipping): # used in ukmrio_main_2024
     
     fullexioNRG = {}
     
@@ -121,7 +121,7 @@ def iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,s
        
     return (fullexioNRG)
 
-def uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2023
+def uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2024
     exioNRG = {}
 
     exio_i_index = []
@@ -162,7 +162,7 @@ def uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2
       
     return exioNRG
 
-def make_nrg_2023(uk_energy_filepath,exioNRG,S,yrs,meta): # used in ukmrio_main_2023
+def make_nrg(uk_energy_filepath,exioNRG,S,yrs,meta): # used in ukmrio_main_2024
     
     ukd = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'data', skiprows=40, usecols='B:AJ')
     ukc = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'conc', index_col=0,header = [0,1])
