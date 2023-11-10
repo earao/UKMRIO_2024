@@ -15,9 +15,9 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def make_exio_stressor_382(mat_filepath,yrs): # used in ukmrio_main_2023
+def make_exio_stressor_382(mat_filepath,yrs): # used in ukmrio_main_2024
     
-    tempdata = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), '90-20', usecols = 'A:AK')
+    tempdata = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), '90-21', usecols = 'A:AL')
     conc_mat = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'mat_EXIO',index_col=0)
     conc_bio = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'bio_EXIO',index_col=0)
     conc_ore = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'ore_EXIO',index_col=0)
@@ -25,7 +25,7 @@ def make_exio_stressor_382(mat_filepath,yrs): # used in ukmrio_main_2023
     conc_ffl = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'ffl_EXIO',index_col=0)   
     conc_c = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'countries_2_EXIO', index_col=0)
     
-    data = np.zeros(shape=[62*219,31])
+    data = np.zeros(shape=[62*219,32])
     
     c_list = conc_c.index
     m_list = conc_mat.index
@@ -65,7 +65,7 @@ def make_exio_stressor_382(mat_filepath,yrs): # used in ukmrio_main_2023
         
     return exioMAT
 
-def make_UK_exioMAT(exioMAT,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2023
+def make_UK_exioMAT(exioMAT,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2024
     
     exioMAT2 = {}
           
@@ -107,22 +107,22 @@ def make_UK_exioMAT(exioMAT,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2
       
     return exioMAT2
 
-def make_uk_stressor(ons_filepath,yrs): # used in ukmrio_main_2023
+def make_uk_stressor(ons_filepath,yrs): # used in ukmrio_main_2024
  
-    data = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'Domestic Extraction', skiprows = 4, usecols = 'B:AF')
-    conc_crop = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'crop',index_col=0)
-    conc_crpr = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'crop_res',index_col=0)
-    conc_wood = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'wood',index_col=0)
-    conc_wild = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'wild_catch',index_col=0)
-    conc_iron = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'iron',index_col=0)
-    conc_nfer = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'non_fer',index_col=0)
-    conc_lmgp = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'lime_gyp',index_col=0)
-    conc_clay = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'clay',index_col=0)
-    conc_sand = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'sand',index_col=0)
-    conc_othr = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'other',index_col=0)
-    conc_coal = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'coal',index_col=0)
-    conc__oil = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'oil',index_col=0)
-    conc_ngas = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2023/materialflow2022.xlsx'), 'gas',index_col=0)
+    data = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'Domestic Extraction', skiprows = 4, usecols = 'B:AF')
+    conc_crop = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'crop',index_col=0)
+    conc_crpr = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'crop_res',index_col=0)
+    conc_wood = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'wood',index_col=0)
+    conc_wild = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'wild_catch',index_col=0)
+    conc_iron = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'iron',index_col=0)
+    conc_nfer = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'non_fer',index_col=0)
+    conc_lmgp = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'lime_gyp',index_col=0)
+    conc_clay = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'clay',index_col=0)
+    conc_sand = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'sand',index_col=0)
+    conc_othr = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'other',index_col=0)
+    conc_coal = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'coal',index_col=0)
+    conc__oil = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'oil',index_col=0)
+    conc_ngas = pd.read_excel(os.path.join(ons_filepath, 'ONS environmental accounts/2024/materialflow2023final.xlsx'), 'gas',index_col=0)
 
     data.fillna(value=0, inplace=True)
      
@@ -149,7 +149,7 @@ def make_uk_stressor(ons_filepath,yrs): # used in ukmrio_main_2023
         
     return uk_MAT_sectors
 
-def make_mat(uk_MAT_sectors,exioMAT,S,yrs,meta): # used in ukmrio_main_2023
+def make_mat(uk_MAT_sectors,exioMAT,S,yrs,meta): # used in ukmrio_main_2024
     
     mat = {}
     bio = {}
