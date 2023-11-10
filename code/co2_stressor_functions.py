@@ -88,11 +88,11 @@ def make_old_exio_stressor_382(exioCO2,exioGHG,edgar_filepath,regions): # used i
 
 def make_UK_emissions(ons_filepath,yrs): # used in ukmrio_main_2024
     
-    emissionsyrs = np.array([int(x) for x in range(1990,2021)])
+    emissionsyrs = np.array([int(x) for x in range(1990,2022)])
     
-    file = os.path.join(ons_filepath, 'ONS environmental accounts/2024/atmosphericemissionsghg.xlsx')
+    file = os.path.join(ons_filepath, 'ONS environmental accounts/2024/atmoshpericemissionsghg.xlsx') # not my spelling!
     
-    uk_ghg_sectors = pd.read_excel(file, 'GHG total', usecols='C:AI', index_col=0, header=0, nrows=131, skiprows = 29)
+    uk_ghg_sectors = pd.read_excel(file, 'GHG total ', usecols='C:AI', index_col=0, header=0, nrows=131, skiprows = 29)
     uk_co2_sectors = pd.read_excel(file, 'CO2', usecols='C:AI', index_col=0, header=0, nrows=131, skiprows = 29)
     uk_ghg_sectors.columns = emissionsyrs
     uk_co2_sectors.columns = emissionsyrs
