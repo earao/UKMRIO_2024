@@ -205,7 +205,7 @@ def combine_data(o_supply,o_use,o_final_demand,o_exports,n_supply,n_use,n_final_
     
     return(supply,use,final_demand,exports)
 
-def load_hh_data(inputs_filepath,ons_filepath,n_final_demand,newyrs): # used in ukmrio_main_2023
+def load_hh_data(inputs_filepath,ons_filepath,n_final_demand,newyrs): # used in ukmrio_main_2024
     
     n_final_demand_hh = {}
     file = os.path.join(inputs_filepath, 'COICOP_concs.xlsx')
