@@ -22,15 +22,14 @@ else:
 
 # define filepaths
 data_filepath = wd + 'data/'
-# results_filepath = wd + 'outputs/results_2023/'
-results_filepath = wd + 'temp_anne_outputs/results_2023/'
+results_filepath = wd + 'outputs/results_2024/'
 lcf_filepath = wd + 'data/raw/LCFS/'
 
 
 # import LCFS data
-years = list(range(2001,2021))
+years = list(range(2001,2022))
 
-coicop_file = data_filepath + 'processed/LCFS/LCF_20230126.csv'
+coicop_file = data_filepath + 'processed/LCFS/LCF_20231117.csv'
 coicop_lookup = pd.read_csv(coicop_file, header = 0).fillna(0)
 
 hhspenddata = {}
