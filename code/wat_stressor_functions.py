@@ -14,7 +14,7 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath): # used in ukmrio_main_2023
+def make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath): # used in ukmrio_main_2024
 
     exioWATgrn_cons = {}
     exioWATblu_cons = {}
