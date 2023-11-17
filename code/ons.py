@@ -211,7 +211,7 @@ def load_hh_data(inputs_filepath,ons_filepath,n_final_demand,newyrs): # used in 
     file = os.path.join(inputs_filepath, 'COICOP_concs.xlsx')
     tempconc1 = pd.read_excel(file, sheet_name = '103_112_2021',index_col=0)
      
-    file = os.path.join(ons_filepath, '2023/publicationtablesbb22.xlsx')
+    file = os.path.join(ons_filepath, '2024/supublicationtablesbb23v2.xlsx')
     for yr in newyrs:
         n_final_demand_hh[yr] = pd.read_excel(file, sheet_name=('Table 3 - HHFCe '+str(yr)),header=3, index_col=None, usecols="C:AL",nrows = 104)
         n_final_demand_hh[yr].index = tempconc1.columns
