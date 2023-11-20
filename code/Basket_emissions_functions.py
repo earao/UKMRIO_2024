@@ -243,7 +243,7 @@ def makefoot(S,U,Y,stressor,years):
 # Run all #
 ###########
 
-def make_footprint(hhdspend, wd):
+def make_footprint(hhdspend, wd, concs_filepath):
     
     """
     Calculate consumption-based household GHG emissions for MSOAs or LSOAs from the LCFS (emissios calculated in LCFS_aggregation_combined_years.py) and the UKMRIO 2020
@@ -261,7 +261,7 @@ def make_footprint(hhdspend, wd):
 
     # load and clean up concs to make it usable
     # these translate IO data sectors to LCFS products/services
-    concs_dict = pd.read_excel(wd + 'ONS_to_COICOP_LCF_concs.xlsx', sheet_name=None, index_col=0)
+    concs_dict = pd.read_excel(concs_filepath + 'ONS_to_COICOP_LCF_concs.xlsx', sheet_name=None, index_col=0)
 
 #######################
 # aggregate emissions #
@@ -311,5 +311,7 @@ def make_footprint(hhdspend, wd):
         # this gives GHG emissions for the groups, break down to per capita emissions
         temp = ylcf_props[year].T.apply(lambda x: x*COICOP_ghg[year]['total_ghg'])
         Total_ghg[year] = temp.T[ylcf_props[year].columns.tolist()]
+        
+        print('Emissions calculated for ' + str(year))
     
     return(Total_ghg, multipliers)
