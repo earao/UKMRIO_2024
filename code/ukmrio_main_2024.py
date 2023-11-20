@@ -128,7 +128,7 @@ for yr in range(1990, 1996):
 (iea_fe_data,aviation,shipping) = energy.make_IEA_data(iea_filepath)
 fullexioNRG = energy.iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,shipping)
 exioNRG = energy.uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc) 
-uk_nrg_direct = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'direct')
+uk_nrg_direct = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2024.xlsx'), sheet_name = 'direct')
 nrg = energy.make_nrg(uk_energy_filepath,exioNRG,S,yrs,meta)
        
 #make material stressors
@@ -167,22 +167,23 @@ uk_foot['ghg_Y2'] = uk.footprint(ghg,U,S,Y2,yrs,meta)
 # save direct emissions
 for data in ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct']:
     temp = cp.copy(eval(data))
-    temp.to_excel(inputs_filepath + data + '.xlsx')
+    temp.to_excel(results_filepath + data + '.xlsx')
     
 # save others
 item_list = ['S', 'U', 'Y', 'co2', 'uk_co2_direct', 'ghg', 'mat', 'bio', 'ore', 'nmm', 'ffl', 
              'WATgrn_cons', 'WATblu_cons', 'WATblu_wdrl', 'nrg', 'uk_nrg_direct']
 
+
 for data in item_list:
-    stressor_writer = pd.ExcelWriter(inputs_filepath + data + '.xlsx')
+    stressor_writer = pd.ExcelWriter(results_filepath + data + '.xlsx')
     temp = cp.copy(eval(data))
     for yr in yrs:
         temp[yr].to_excel(stressor_writer, str(yr))
     stressor_writer.save() 
 
 # save as pickle file
-for data in item_list[:3]:
-    pickle.dump(eval(data), open(inputs_filepath + data + ".p", "wb" ) )
+for data in item_list:
+    pickle.dump(eval(data), open(results_filepath + data + ".p", "wb" ) )
     
 for data in item_list[3:] + ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct']:
     pickle.dump(eval(data), open(inputs_filepath + data.lower() + ".p", "wb" ) )
@@ -194,4 +195,4 @@ meta['fd']['len_col']=43
 meta['fd_dd']['rng_col']=slice(0, 42, None)  
 meta['fd_dd']['len_col']=42   
 
-pickle.dump(meta, open(inputs_filepath + "meta.p", "wb" ) )
+pickle.dump(meta, open(results_filepath + "meta.p", "wb" ) )
