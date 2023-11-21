@@ -164,8 +164,8 @@ def uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc): # used in ukmrio_main_2
 
 def make_nrg(uk_energy_filepath,exioNRG,S,yrs,meta): # used in ukmrio_main_2024
     
-    ukd = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'data', skiprows=40, usecols='B:AJ')
-    ukc = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2023.xlsx'), sheet_name = 'conc', index_col=0,header = [0,1])
+    ukd = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2024.xlsx'), sheet_name = 'data', skiprows=45, usecols='B:AJ')
+    ukc = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2024.xlsx'), sheet_name = 'conc', index_col=0,header = [0,1])
     
     erg = {}
      
