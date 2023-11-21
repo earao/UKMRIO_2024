@@ -552,6 +552,78 @@ def make_domprop(com_use,dom_use,use,final_demand,ayears,yrs,conc):
         
     return domprop
 
+def make_domprop2(com_use,dom_use,use,final_demand,ayears,yrs,conc):
+   
+    tempdp_ayears = {}
+    tempdp = {}
+    temp = np.zeros((113,120))
+    domprop = OrderedDict()
+    
+    
+    for a in range(0,3):
+        
+        temp = np.zeros((113,120))
+        
+        conc['annxb_v'].columns = com_use[str(ayears[a])].index
+        conc['annxb_h'].columns = com_use[str(ayears[a])].columns
+        tempdom = df.dot(conc['annxb_v'],df.dot(dom_use[str(ayears[a])],df.transpose(conc['annxb_h'])))
+        tempcom = df.dot(conc['annxb_v'],df.dot(com_use[str(ayears[a])],df.transpose(conc['annxb_h'])))
+        
+        temp[0:112,0:112] = tempdom.iloc[0:112,0:112]/tempcom.iloc[0:112,0:112]
+        temp[0:112,112:119] = tempdom.iloc[0:112,113:120].values/tempcom.iloc[0:112,113:120].values
+        temp[112:113,0:112] = np.transpose(tempdom.iloc[113,0:112].values/tempcom.iloc[112,0:112].values)
+        temp[112:113,112:119] = np.transpose(tempdom.iloc[113,113:120].values/tempcom.iloc[112,113:120].values)
+        temp[0:113,119] = tempdom.iloc[0:113,120]/tempcom.iloc[0:113,120].values
+        
+        temp = df(temp)
+        
+        temp.fillna(1, inplace=True)
+        temp[temp<0]=0
+        temp[temp>1]=1
+        
+        tempdp_ayears[ayears[a]]=temp
+        
+    for a in range(3,7):
+        
+        temp = np.zeros((113,120))
+    
+        temp[0:112,0:112] = dom_use[str(ayears[a])].iloc[0:112,0:112]/com_use[str(ayears[a])].iloc[0:112,0:112]
+        temp[0:112,112:119] = dom_use[str(ayears[a])].iloc[0:112,113:120].values/com_use[str(ayears[a])].iloc[0:112,113:120].values
+        temp[112:113,0:112] = np.transpose(dom_use[str(ayears[a])].iloc[113,0:112].values/com_use[str(ayears[a])].iloc[112,0:112].values)
+        temp[112:113,112:119] = np.transpose(dom_use[str(ayears[a])].iloc[113,113:120].values/com_use[str(ayears[a])].iloc[112,113:120].values)
+        temp[0:113,119] = dom_use[str(ayears[a])].iloc[0:113,120]/com_use[str(ayears[a])].iloc[0:113,120].values
+    
+        temp = df(temp)
+        
+        temp.fillna(1, inplace=True)
+        temp[temp<0]=0
+        temp[temp>1]=1
+        
+        tempdp_ayears[ayears[a]]=temp
+        
+           
+    for a in range(0,len(ayears)-1):
+        diff_in_prop = np.divide((tempdp_ayears[ayears[a+1]].values-tempdp_ayears[ayears[a]].values),(ayears[a+1]-ayears[a]))
+        
+        for b in range((ayears[a]-ayears[0]),ayears[a+1]-ayears[0]+1):
+            year_mult = b-(ayears[a]-ayears[0])
+            temp =  np.add(np.multiply(diff_in_prop,year_mult),tempdp_ayears[ayears[a]])
+            tempdp[str(1990+b)] = temp
+            del(temp)
+    
+    for a in range(0,(ayears[len(ayears)-1]-yrs[0])):       
+        domprop[str(yrs[a])] = tempdp[str(yrs[a])]
+    for a in range(ayears[len(ayears)-1]-yrs[0],len(yrs)):         
+        domprop[str(yrs[a])] = tempdp[str(ayears[len(ayears)-1])]  
+    
+    domprop['1990']=domprop['1995']
+    domprop['1991']=domprop['1995']
+    domprop['1992']=domprop['1995']
+    domprop['1993']=domprop['1995']
+    domprop['1994']=domprop['1995']
+        
+    return domprop
+
 ###########################
 # used in defra_main_2023 #
 ###########################

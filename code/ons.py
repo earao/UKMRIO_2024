@@ -112,6 +112,104 @@ def load_io_data(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmrio
 
     return (supply,use,final_demand,exports,dom_use,com_use,conc)
 
+def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmrio_main_2023
+
+    # load supply, use, final demand, exports data
+    supply = {}
+    use = {}
+    final_demand = {}
+    exports = {}
+    
+    file = os.path.join(ons_filepath, ons_year, ons_name)
+    for yr in newyrs:
+        temp = pd.read_excel(file, sheet_name=(str(yr)+' Supply'),header=8, index_col=0, usecols="B:DJ",nrows = 112)
+        supply[yr] = df(np.transpose(temp.values),index = temp.columns, columns=temp.index)
+        use[yr] = pd.read_excel(file, sheet_name=(str(yr)+ ' Use'),header=8, index_col=0, usecols="B:DJ",nrows = 130)
+        final_demand[yr] = pd.read_excel(file, sheet_name=(str(yr)+ ' Use'),header=8, index_col=None, usecols="DL:DR",nrows = 113)
+        final_demand[yr].index = use[yr].index[0:113]
+        exports[yr] = np.sum(pd.read_excel(file, sheet_name=(str(yr)+ ' Use'),header=8, index_col=None, usecols="DS:DV",nrows = 113),1)
+        exports[yr].index = use[yr].index[0:113]
+        
+    # load dom_use, com_use, conc data
+    # import lookup needed
+    lookup = pd.read_csv(wd + 'data/lookups/io_data_import_2024.csv').set_index(['year', 'data', 'variable', 'conc_type'])\
+        .unstack(level=['year', 'data', 'conc_type']).droplevel(axis=1, level=0)
+    
+    # import dom_use and  com_use data
+    dom_use = {}
+    com_use = {}
+    
+    all_data = {}
+    for yr in lookup.columns.levels[0].tolist():
+        all_data[yr] = {}
+        temp = lookup[yr].drop('conc', axis=1).droplevel(axis=1, level=1)
+        for dataset in temp.columns.tolist():
+            file = ons_filepath + temp.loc['file', dataset]
+            header = int(temp.loc['header', dataset])
+            index_col = int(temp.loc['index_col', dataset])
+            nrows = int(temp.loc['nrows', dataset])
+            usecols = temp.loc['usecols', dataset]
+            sheet_name = temp.loc['sheet_name', dataset]
+            
+            all_data[yr][dataset] = pd.read_excel(file, sheet_name=sheet_name, header=header, index_col=index_col, usecols=usecols, nrows=nrows)
+            all_data[yr][dataset] = all_data[yr][dataset].apply(lambda x: pd.to_numeric(x, errors='coerce'))
+            all_data[yr][dataset].fillna(0, inplace=True)
+
+    # make 1990 com_use from dom_use and imp_use
+    all_data[1990]['com_use'] = all_data[1990]['dom_use'].iloc[0:124,:] + all_data[1990]['imp_use'].iloc[0:124,:]
+    cols = ['Imports of goods and services', 'Sales by final demand', 'Taxes on expenditure less subsidies', 'Income from employment',
+            'Gross profits etc', 'Total inputs']
+    
+    for i in range(len(cols)):
+        item = cols[i]
+        all_data[1990]['com_use'].loc[item] = all_data[1990]['dom_use'].iloc[124 + i,:] 
+    all_data[1990]['com_use'].fillna(0, inplace=True)
+    
+    # save in different format
+    for yr in lookup.columns.levels[0].tolist():
+        com_use[str(yr)] = all_data[yr]['com_use']
+        dom_use[str(yr)] = all_data[yr]['dom_use'] 
+        
+    # import conc data
+    conc = {}
+    temp = lookup.swaplevel(axis=1, i=0, j=1)['conc']
+    file = ons_filepath + 'analytical tables/concordances112.xlsx'
+    
+    for yr in lookup.columns.levels[0].tolist():
+        for item in ['dv', 'dh', 'cv', 'ch']: 
+            # import data
+            usecols = temp.loc['usecols', (yr, item)]
+            conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
+            
+        # fix index
+        if yr == 1990:
+            conc[str(yr) + '_cv'].index = dom_use[str(yr)].index
+        else:
+            conc[str(yr) + '_cv'].index = com_use[str(yr)].index
+        conc[str(yr) + '_ch'].index = com_use[str(yr)].columns
+        conc[str(yr) + '_dv'].index = dom_use[str(yr)].index
+        conc[str(yr) + '_dh'].index = dom_use[str(yr)].columns
+    
+    conc['annxb_v'] = pd.read_excel(file, sheet_name='AnnexB_v',header = 1, index_col=0, usecols="B:EU")
+    conc['annxb_h'] = pd.read_excel(file, sheet_name='AnnexB_h',header = 1, index_col=0, usecols="B:EX")
+    conc['annxb_v_u'] = pd.read_excel(file, sheet_name='AnnexB_v_u',header = 1, index_col=0, usecols="B:EA")
+    conc['annxb_h_u'] = pd.read_excel(file, sheet_name='AnnexB_h_u',header = 1, index_col=0, usecols="B:DW")
+    conc['annxb_v_y'] = pd.read_excel(file, sheet_name='AnnexB_v_y',header = 1, index_col=0, usecols="B:DV")
+    conc['annxb_s'] = pd.read_excel(file, sheet_name='AnnexB_s',header = 1, index_col=0, usecols="B:DU")
+    
+    # fix columns
+    conc['1995_dh'].columns = conc['annxb_h'].columns
+    conc['1995_dv'].columns = conc['annxb_v'].columns
+    conc['2005_dh'].columns = conc['annxb_h'].columns
+    conc['2005_dv'].columns = conc['annxb_v'].columns
+       
+    conc['1995_ch'].columns = conc['annxb_h'].columns
+    conc['1995_cv'].columns = conc['annxb_v'].columns
+    conc['2005_ch'].columns = conc['annxb_h'].columns
+    conc['2005_cv'].columns = conc['annxb_v'].columns
+
+    return (supply,use,final_demand,exports,dom_use,com_use,conc)
+
 def load_old_io_data(filepath): # used in ukmrio_main_2023
     
     supply = {}
