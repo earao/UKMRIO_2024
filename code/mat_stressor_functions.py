@@ -25,7 +25,7 @@ def make_exio_stressor_382(mat_filepath,yrs): # used in ukmrio_main_2024
     conc_ffl = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'ffl_EXIO',index_col=0)   
     conc_c = pd.read_excel(os.path.join(mat_filepath, 'mat_data.xlsx'), 'countries_2_EXIO', index_col=0)
     
-    data = np.zeros(shape=[62*219,32])
+    data = np.zeros(shape=[62*219,33])
     
     c_list = conc_c.index
     m_list = conc_mat.index
