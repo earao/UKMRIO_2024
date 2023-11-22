@@ -247,6 +247,32 @@ def align_analytic_data(dom_use,com_use,conc): # used in ukmrio_main_2023
       
     return (dom_use,com_use)
 
+def align_analytic_data2(analytic_data,conc): # used in ukmrio_main_2023
+
+    dom_use = {}
+    com_use = {}
+    imp_use = {}
+    transit = {}
+    
+    for yr in list(analytic_data.keys()):
+        if yr < 2015:
+            dom_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_dv']),analytic_data[yr]['dom_use']),conc[str(yr) + '_dh'])
+            com_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_cv']),analytic_data[yr]['com_use']),conc[str(yr) + '_ch'])
+        elif yr == 2015: 
+            dom_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_dv']),analytic_data[yr]['dom_use']),conc[str(yr) + '_dh'])
+            imp_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_iv']),analytic_data[yr]['imp_use']),conc[str(yr) + '_ih'])
+            transit[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_tv']),analytic_data[yr]['transition']),conc[str(yr) + '_th'])
+            com_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_cv']),analytic_data[yr]['com_use']),conc[str(yr) + '_ch'])
+            tax_rate = (transit[yr] - imp_use[yr])/dom_use[yr]
+            tax_rate.fillna(0, inplace=True)
+            tax_rate.replace([np.inf, -np.inf], 0, inplace = True)
+        else: 
+            dom_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_dv']),analytic_data[yr]['dom_use']),conc[str(yr) + '_dh'])
+            imp_use[yr] = df.dot(df.dot(df.transpose(conc[str(yr) + '_iv']),analytic_data[yr]['imp_use']),conc[str(yr) + '_ih'])
+            com_use[yr] = (dom_use[yr] * tax_rate) + dom_use[yr] + imp_use[yr]    
+      
+    return (dom_use,com_use)
+
 def align_old_SUT_data(o_supply,o_use,o_final_demand,o_exports,supply,conc): # used in ukmrio_main_2023
     
     conc['annxb_v_y'].columns = o_final_demand[1992].index
