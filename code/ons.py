@@ -153,43 +153,49 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
             
             all_data[yr][dataset] = pd.read_excel(file, sheet_name=sheet_name, header=header, index_col=index_col, usecols=usecols, nrows=nrows)
             all_data[yr][dataset] = all_data[yr][dataset].apply(lambda x: pd.to_numeric(x, errors='coerce'))
-            all_data[yr][dataset].fillna(0, inplace=True)
-
-    # make 1990 com_use from dom_use and imp_use
-    all_data[1990]['com_use'] = all_data[1990]['dom_use'].iloc[0:124,:] + all_data[1990]['imp_use'].iloc[0:124,:]
-    cols = ['Imports of goods and services', 'Sales by final demand', 'Taxes on expenditure less subsidies', 'Income from employment',
-            'Gross profits etc', 'Total inputs']
-    
-    for i in range(len(cols)):
-        item = cols[i]
-        all_data[1990]['com_use'].loc[item] = all_data[1990]['dom_use'].iloc[124 + i,:] 
-    all_data[1990]['com_use'].fillna(0, inplace=True)
-    
-    # save in different format
-    for yr in lookup.columns.levels[0].tolist():
-        com_use[str(yr)] = all_data[yr]['com_use']
-        dom_use[str(yr)] = all_data[yr]['dom_use'] 
+            all_data[yr][dataset].fillna(0, inplace=True)    
         
     # import conc data
     conc = {}
     temp = lookup.swaplevel(axis=1, i=0, j=1)['conc']
-    file = ons_filepath + 'analytical tables/concordances112.xlsx'
+    file = ons_filepath + 'analytical tables/concordances112_2024.xlsx'
     
     for yr in lookup.columns.levels[0].tolist():
-        for item in ['dv', 'dh', 'cv', 'ch']: 
-            # import data
-            usecols = temp.loc['usecols', (yr, item)]
-            conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
-            
-        # fix index
-        if yr == 1990:
-            conc[str(yr) + '_cv'].index = dom_use[str(yr)].index
+        if yr < 2015:
+            for item in ['dv', 'dh', 'cv', 'ch']: 
+                # import data
+                usecols = temp.loc['usecols', (yr, item)]
+                conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
+            # fix index
+            conc[str(yr) + '_cv'].index = all_data[yr]['com_use'].index
+            conc[str(yr) + '_ch'].index = all_data[yr]['com_use'].columns
+            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
+        elif yr == 2015:
+            for item in ['dv', 'dh', 'cv', 'ch', 'iv', 'ih', 'tv', 'th']: 
+                # import data
+                usecols = temp.loc['usecols', (yr, item)]
+                conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
+            # fix index
+            conc[str(yr) + '_cv'].index = all_data[yr]['com_use'].index
+            conc[str(yr) + '_ch'].index = all_data[yr]['com_use'].columns
+            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
+            conc[str(yr) + '_iv'].index = all_data[yr]['imp_use'].index
+            conc[str(yr) + '_ih'].index = all_data[yr]['imp_use'].columns
+            conc[str(yr) + '_tv'].index = all_data[yr]['transition'].index
+            conc[str(yr) + '_th'].index = all_data[yr]['transition'].columns
         else:
-            conc[str(yr) + '_cv'].index = com_use[str(yr)].index
-        conc[str(yr) + '_ch'].index = com_use[str(yr)].columns
-        conc[str(yr) + '_dv'].index = dom_use[str(yr)].index
-        conc[str(yr) + '_dh'].index = dom_use[str(yr)].columns
-    
+            for item in ['dv', 'dh', 'iv', 'ih']: 
+                # import data
+                usecols = temp.loc['usecols', (yr, item)]
+                conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
+            # fix index
+            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
+            conc[str(yr) + '_iv'].index = all_data[yr]['imp_use'].index
+            conc[str(yr) + '_ih'].index = all_data[yr]['imp_use'].columns
+        
     conc['annxb_v'] = pd.read_excel(file, sheet_name='AnnexB_v',header = 1, index_col=0, usecols="B:EU")
     conc['annxb_h'] = pd.read_excel(file, sheet_name='AnnexB_h',header = 1, index_col=0, usecols="B:EX")
     conc['annxb_v_u'] = pd.read_excel(file, sheet_name='AnnexB_v_u',header = 1, index_col=0, usecols="B:EA")
@@ -207,6 +213,23 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
     conc['1995_cv'].columns = conc['annxb_v'].columns
     conc['2005_ch'].columns = conc['annxb_h'].columns
     conc['2005_cv'].columns = conc['annxb_v'].columns
+    
+    # make 2015 tax rate
+    all_data[2015]['tax rate'] = (all_data[2015]['transition'] - all_data[2015]['imp_use'])/all_data[2015]['imp_use'].iloc[0:106,:]
+    all_data[2015]['tax rate'].fillna(0, inplace=True)
+    all_data[2015]['tax rate'][all_data[2015]['tax rate']<0]=0
+    all_data[2015]['tax rate'][all_data[2015]['tax rate']>1]=1
+    
+    # make 2016, 2017, 2018, 2019 com_use
+    
+    all_data[2017]['com_use'] = (all_data[2017]['dom_use'] * all_data[2015]['tax rate']) + all_data[2017]['imp_use'] + all_data[2017]['dom_use']
+    all_data[2018]['com_use'] = (all_data[2018]['dom_use'] * all_data[2015]['tax rate']) + all_data[2018]['imp_use'] + all_data[2018]['dom_use']
+    all_data[2019]['com_use'] = (all_data[2019]['dom_use'] * all_data[2015]['tax rate']) + all_data[2019]['imp_use'] + all_data[2019]['dom_use']
+   
+    # save in different format
+    for yr in lookup.columns.levels[0].tolist():
+        com_use[str(yr)] = all_data[yr]['com_use']
+        dom_use[str(yr)] = all_data[yr]['dom_use'] 
 
     return (supply,use,final_demand,exports,dom_use,com_use,conc)
 
