@@ -129,19 +129,16 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
         final_demand[yr].index = use[yr].index[0:113]
         exports[yr] = np.sum(pd.read_excel(file, sheet_name=(str(yr)+ ' Use'),header=8, index_col=None, usecols="DS:DV",nrows = 113),1)
         exports[yr].index = use[yr].index[0:113]
-        
-    # load dom_use, com_use, conc data
+    
     # import lookup needed
     lookup = pd.read_csv(wd + 'data/lookups/io_data_import_2024.csv').set_index(['year', 'data', 'variable', 'conc_type'])\
         .unstack(level=['year', 'data', 'conc_type']).droplevel(axis=1, level=0)
     
-    # import dom_use and  com_use data
-    dom_use = {}
-    com_use = {}
+    # import dom_use, imp_use, transition and com_use
     
-    all_data = {}
+    analytic_data = {}
     for yr in lookup.columns.levels[0].tolist():
-        all_data[yr] = {}
+        analytic_data[yr] = {}
         temp = lookup[yr].drop('conc', axis=1).droplevel(axis=1, level=1)
         for dataset in temp.columns.tolist():
             file = ons_filepath + temp.loc['file', dataset]
@@ -151,9 +148,9 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
             usecols = temp.loc['usecols', dataset]
             sheet_name = temp.loc['sheet_name', dataset]
             
-            all_data[yr][dataset] = pd.read_excel(file, sheet_name=sheet_name, header=header, index_col=index_col, usecols=usecols, nrows=nrows)
-            all_data[yr][dataset] = all_data[yr][dataset].apply(lambda x: pd.to_numeric(x, errors='coerce'))
-            all_data[yr][dataset].fillna(0, inplace=True)    
+            analytic_data[yr][dataset] = pd.read_excel(file, sheet_name=sheet_name, header=header, index_col=index_col, usecols=usecols, nrows=nrows)
+            analytic_data[yr][dataset] = analytic_data[yr][dataset].apply(lambda x: pd.to_numeric(x, errors='coerce'))
+            analytic_data[yr][dataset].fillna(0, inplace=True)    
         
     # import conc data
     conc = {}
@@ -167,34 +164,34 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
                 usecols = temp.loc['usecols', (yr, item)]
                 conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
             # fix index
-            conc[str(yr) + '_cv'].index = all_data[yr]['com_use'].index
-            conc[str(yr) + '_ch'].index = all_data[yr]['com_use'].columns
-            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
-            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
+            conc[str(yr) + '_cv'].index = analytic_data[yr]['com_use'].index
+            conc[str(yr) + '_ch'].index = analytic_data[yr]['com_use'].columns
+            conc[str(yr) + '_dv'].index = analytic_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = analytic_data[yr]['dom_use'].columns
         elif yr == 2015:
             for item in ['dv', 'dh', 'cv', 'ch', 'iv', 'ih', 'tv', 'th']: 
                 # import data
                 usecols = temp.loc['usecols', (yr, item)]
                 conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
             # fix index
-            conc[str(yr) + '_cv'].index = all_data[yr]['com_use'].index
-            conc[str(yr) + '_ch'].index = all_data[yr]['com_use'].columns
-            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
-            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
-            conc[str(yr) + '_iv'].index = all_data[yr]['imp_use'].index
-            conc[str(yr) + '_ih'].index = all_data[yr]['imp_use'].columns
-            conc[str(yr) + '_tv'].index = all_data[yr]['transition'].index
-            conc[str(yr) + '_th'].index = all_data[yr]['transition'].columns
+            conc[str(yr) + '_cv'].index = analytic_data[yr]['com_use'].index
+            conc[str(yr) + '_ch'].index = analytic_data[yr]['com_use'].columns
+            conc[str(yr) + '_dv'].index = analytic_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = analytic_data[yr]['dom_use'].columns
+            conc[str(yr) + '_iv'].index = analytic_data[yr]['imp_use'].index
+            conc[str(yr) + '_ih'].index = analytic_data[yr]['imp_use'].columns
+            conc[str(yr) + '_tv'].index = analytic_data[yr]['transition'].index
+            conc[str(yr) + '_th'].index = analytic_data[yr]['transition'].columns
         else:
             for item in ['dv', 'dh', 'iv', 'ih']: 
                 # import data
                 usecols = temp.loc['usecols', (yr, item)]
                 conc[str(yr) + '_' + item] = pd.read_excel(file, sheet_name= str(yr) + item[0] + '_' + item[1], header = 1, index_col=0, usecols=usecols)
             # fix index
-            conc[str(yr) + '_dv'].index = all_data[yr]['dom_use'].index
-            conc[str(yr) + '_dh'].index = all_data[yr]['dom_use'].columns
-            conc[str(yr) + '_iv'].index = all_data[yr]['imp_use'].index
-            conc[str(yr) + '_ih'].index = all_data[yr]['imp_use'].columns
+            conc[str(yr) + '_dv'].index = analytic_data[yr]['dom_use'].index
+            conc[str(yr) + '_dh'].index = analytic_data[yr]['dom_use'].columns
+            conc[str(yr) + '_iv'].index = analytic_data[yr]['imp_use'].index
+            conc[str(yr) + '_ih'].index = analytic_data[yr]['imp_use'].columns
         
     conc['annxb_v'] = pd.read_excel(file, sheet_name='AnnexB_v',header = 1, index_col=0, usecols="B:EU")
     conc['annxb_h'] = pd.read_excel(file, sheet_name='AnnexB_h',header = 1, index_col=0, usecols="B:EX")
@@ -214,24 +211,8 @@ def load_io_data2(wd, ons_filepath, newyrs, ons_year, ons_name): # used in ukmri
     conc['2005_ch'].columns = conc['annxb_h'].columns
     conc['2005_cv'].columns = conc['annxb_v'].columns
     
-    # make 2015 tax rate
-    all_data[2015]['tax rate'] = (all_data[2015]['transition'] - all_data[2015]['imp_use'])/all_data[2015]['imp_use'].iloc[0:106,:]
-    all_data[2015]['tax rate'].fillna(0, inplace=True)
-    all_data[2015]['tax rate'][all_data[2015]['tax rate']<0]=0
-    all_data[2015]['tax rate'][all_data[2015]['tax rate']>1]=1
     
-    # make 2016, 2017, 2018, 2019 com_use
-    
-    all_data[2017]['com_use'] = (all_data[2017]['dom_use'] * all_data[2015]['tax rate']) + all_data[2017]['imp_use'] + all_data[2017]['dom_use']
-    all_data[2018]['com_use'] = (all_data[2018]['dom_use'] * all_data[2015]['tax rate']) + all_data[2018]['imp_use'] + all_data[2018]['dom_use']
-    all_data[2019]['com_use'] = (all_data[2019]['dom_use'] * all_data[2015]['tax rate']) + all_data[2019]['imp_use'] + all_data[2019]['dom_use']
-   
-    # save in different format
-    for yr in lookup.columns.levels[0].tolist():
-        com_use[str(yr)] = all_data[yr]['com_use']
-        dom_use[str(yr)] = all_data[yr]['dom_use'] 
-
-    return (supply,use,final_demand,exports,dom_use,com_use,conc)
+    return (supply,use,final_demand,exports,analytic_data,conc)
 
 def load_old_io_data(filepath): # used in ukmrio_main_2023
     
