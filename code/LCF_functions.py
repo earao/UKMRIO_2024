@@ -811,7 +811,7 @@ def make_la_spends_pop_by_region_year_2023(regoacsyr,oacyrspends,regions,years):
 
   return (reglaspendyr,regpophholdsyr) 
 	
-def make_pop_hhold_by_oac_region_year_2023(oa_lookup01,oa_lookup11,census_filepath,regions):
+def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,census_filepath,regions):
   regoacsyr = {}
   
   file = os.path.join(census_filepath, '2001OAC.csv') 

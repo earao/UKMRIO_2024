@@ -667,7 +667,7 @@ def make_domprop2(com_use,dom_use,use,final_demand,yrs,conc):
     return domprop
 
 ###########################
-# used in defra_main_2023 #
+# used in defra_main_2024 #
 ###########################
 
 def deflate_io_regions(S,U,Y,newY,y_regions,allyears,years,io_deflators,meta): # used in defra_main_2023
@@ -708,9 +708,9 @@ def make_v(U,Y,yrs,meta):  # used in defra_main_2023
         
     return v
         
-def get_deflator_data_2023(deflator_filepath): # used in defra_main_2023
+def get_deflator_data(deflator_filepath): # used in defra_main_2023
     
-    file = deflator_filepath + 'deflators_AO2023.xlsx'
+    file = deflator_filepath + 'deflators_AO2024.xlsx'
     io = pd.read_excel(file, sheet_name='UK_domestic', index_col=0)
     cc = pd.read_excel(file, sheet_name='COICOP')
     

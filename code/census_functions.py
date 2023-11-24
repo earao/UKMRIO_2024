@@ -14,16 +14,57 @@ df = pd.DataFrame
 # used in sub_national_footprints_2023_main #
 #############################################
 
+def make_21_lookup(census_filepath,s11):    
+    
+    file = os.path.join(census_filepath, 'Output_Area_to_Lower_layer_Super_Output_Area_to_Middle_layer_Super_Output_Area_to_Local_Authority_District_(December_2021)_Lookup_in_England_and_Wales_v3.csv')  
+    ew21 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    ew21 = ew21.reset_index()
+    file = os.path.join(census_filepath, 'laregionlookup2020.xls')  
+    lookupREG = pd.read_excel(file, header = 4, index_col=0)
+    lookupREG = lookupREG.reset_index()
+    ew21 = ew21.merge(lookupREG, left_on = 'LAD22CD', right_on = 'la_code')
+    ew21=ew21.rename(index=str, columns={'ï»¿OA21CD': 'OA21CD', 'LSOA21CD':'LSOA',"MSOA21CD": "MSOA", 'LAD22NM':'LAD_nm',"LAD22CD": "LAD", "region_name":"REG"})
+    ew21=ew21.drop(['LSOA21NM', 'LSOA21NMW', 'MSOA21NM', 'MSOA21NMW', 'LAD22NMW', 'ObjectId', 'la_code','la_name'], axis=1)
+ 
+    s11 = s11.rename(index=str, columns={'OA11CD': 'OA21CD'})
+    
+    oa_lookup21 = pd.concat([ew21,s11])
+    
+    oa_lookup21.set_index(['OA21CD'],inplace=True)
+    
+    return oa_lookup21
+
+
 def make_11_lookup(census_filepath):    
     
-    file = os.path.join(census_filepath, 'Output_Area_to_Lower_Layer_Super_Output_Area_to_Middle_Layer_Super_Output_Area_to_Local_Authority_District_2020_Lookup_in_Great_Britain__Classification_Version_2.csv')  
-    temp = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
-    oa_lookup11=temp.drop(['OAC11CD','OAC11NM','SOAC11CD','SOAC11NM','LSOA11NM','MSOA11NM','LACCD','LACNM', 'RGN11CD', 'CTRY11CD','CTRY11NM','FID'], axis=1)
-    oa_lookup11=oa_lookup11.rename(index=str, columns={'LSOA11CD': 'LSOA', "MSOA11CD": "MSOA", 'LAD20NM':'LAD_nm',"LAD20CD": "LAD", "RGN11NM":"REG"})
-
-    return oa_lookup11
+    file = os.path.join(census_filepath, 'Output_Area_to_Lower_Layer_Super_Output_Area_to_Middle_Layer_Super_Output_Area_to_Local_Authority_District_(December_2020)_Lookup_in_England_and_Wales.csv')  
+    ew11 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    file = os.path.join(census_filepath, 'OA_(2011)_to_OA_(2021)_to_Local_Authority_District_(2022)_for_England_and_Wales_Lookup_(Version_2).csv')  
+    lookupLAD = pd.read_csv(file, encoding="iso8859_15", index_col = 1)
+    file = os.path.join(census_filepath, 'laregionlookup2020.xls')  
+    lookupREG = pd.read_excel(file, header = 4, index_col=0)
+    ew11 = ew11.join(lookupLAD, on='OA11CD')
+    ew11 = ew11.join(lookupREG, on='LAD20CD')
+    ew11 = ew11.rename(index=str, columns={'LSOA11CD': 'LSOA', "MSOA11CD": "MSOA", 'LAD22NM':'LAD_nm',"LAD22CD": "LAD", "region_name":"REG"})
+    ew11 = ew11.drop(['LSOA11NM','MSOA11NM','LAD20CD','LAD20NM','RGN20CD','RGN20NM','OA21CD','ï»¿ObjectId','CHNGIND','LAD22NMW','la_name'], axis=1)
+    
+    file = os.path.join(census_filepath, 'OA_TO_HIGHER_AREAS.csv') 
+    s11 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    s11 = s11.reset_index()
+    file = os.path.join(census_filepath, 'scotlandLAD.csv')  
+    lookupLAD = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    s11 = s11.merge(lookupLAD, left_on = 'CouncilArea2011Code', right_on='LAD')
+    s11['REG'] = 'Scotland'  
+    s11=s11.rename(index=str, columns={'OutputArea2011Code':'OA11CD',"LAU2011Level2Code": "LSOA", "Settlement2010Code": "MSOA", "Council Area NAME": "LAD_nm" })
+    s11=s11.drop(['Locality2010Code','CouncilArea2011Code'], axis=1)
+    
+    oa_lookup11 = pd.concat([ew11,s11])
+    
+    oa_lookup11.set_index(['OA11CD'],inplace=True)
+    
+    return (oa_lookup11,s11)
   
-def make_01_lookup(census_filepath,oa_lookup11):
+def make_01_lookup(census_filepath):
     
     file = os.path.join(census_filepath, 'OA01_LSOA01_MSOA01_EW_LU.csv')  
     ew01 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)    
@@ -33,8 +74,8 @@ def make_01_lookup(census_filepath,oa_lookup11):
     lookupREG = pd.read_excel(file, header = 4, index_col=0)
     ew01 = ew01.join(lookupLAD)
     ew01 = ew01.join(lookupREG, on='LAD20CD')
-    ew01=ew01.rename(index=str, columns={'LSOA01CD': 'LSOA', "MSOA01CD": "MSOA", 'LAD20NM':'LAD_nm',"LAD20CD": "LAD", "region_name":"REG"})
-    ew01=ew01.drop(['LSOA01NM','MSOA01NM','OA01CD','OA11CD','CHGIND','la_name'], axis=1)
+    ew01 = ew01.rename(index=str, columns={'LSOA01CD': 'LSOA', "MSOA01CD": "MSOA", 'LAD20NM':'LAD_nm',"LAD20CD": "LAD", "region_name":"REG"})
+    ew01 = ew01.drop(['LSOA01NM','MSOA01NM','OA01CD','OA11CD','CHGIND','la_name'], axis=1)
 
     file = os.path.join(census_filepath, 'scot2001_lookup.csv') 
     s01 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
@@ -45,7 +86,7 @@ def make_01_lookup(census_filepath,oa_lookup11):
     s01=s01.drop(['council_area'], axis=1)
     s01=s01.rename(index=str, columns={"data_zone": "LSOA", "inter_zone": "MSOA", "Council Area NAME": "LAD_nm",'council_area': 'LAD', })
         
-    oa_lookup01 = pd.concat([ew01,s01], sort=True)
+    oa_lookup01 = pd.concat([ew01,s01])
     
     return oa_lookup01
 
