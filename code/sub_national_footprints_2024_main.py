@@ -56,13 +56,13 @@ hhspenddata2 = copy.deepcopy(hhspenddata)
 hhspenddata2 = lcf.removeoutliers(hhspenddata2,years)
 
         
-concs_dict = pd.read_excel(os.path.join(inputs_filepath, 'ONS_to_COICOP_LCF_concs.xlsx'), sheet_name=None, header = 0, index_col=0)
+concs_dict = pd.read_excel(os.path.join(inputs_filepath, 'ONS_to_COICOP_LCF_concs_2024.xlsx'), sheet_name=None, header = 0, index_col=0)
 
 Y2 = lcf.convert43to41(Y,concs_dict,allyears)
 
 Y=Y2
 
-total_Yhh_112 = dm.make_Yhh_112_34(Y,years,meta) # change to 109? AO No! this is correct!
+total_Yhh_109 = lcf.make_Yhh_109_34(Y,years,meta) 
 
 coicop_exp_tot = lcf.make_totals_2023(hhspenddata2,years)
 
