@@ -50,7 +50,7 @@ for year in years:
     
     # import person data
     dvper_lookup = coicop_lookup.loc[coicop_lookup['Dataset'] == 'dvper'].set_index('Desc_full')
-    
+
     person_data = pd.DataFrame(index=dvper.index)
     for item in dvper_lookup.index.tolist():
         var = dvper_lookup.loc[item, yr]
@@ -59,7 +59,25 @@ for year in years:
         else:
             person_data[item] = dvper[var]
     person_data['no_people'] = 1
+    
+    # make OECD modified        
+    age = person_data[['age']].apply(lambda x: pd.to_numeric(x, errors='coerce'))
+    nan_list = age.loc[age['age'].isna() == True].reset_index()[['case']].drop_duplicates()['case'].tolist()
+    
+    if len(nan_list) > len(age.index.levels[0]) / 100:
+        print('More than 1% of ages missing')
+        raise SystemExit
+        
+    age = age.sort_values('age', ascending = False)
+    age['count'] = 0.5
+    age.loc[age['age'] < 14, 'count'] = 0.3
+    age = age[['count']].unstack(level='person')
+    age[('count', 1)] = 1
+    age = age.fillna(0).sum(1)
+    
+    # merge with person data
     person_data = person_data.apply(lambda x: pd.to_numeric(x, errors='coerce')).sum(axis=0, level='case', skipna=True)
+    person_data['OECD_mod'] = age
         
     # import househols data
     dvhh_lookup = coicop_lookup.loc[coicop_lookup['Dataset'] == 'dvhh'].set_index('Coicop_full')
@@ -91,7 +109,7 @@ for year in years:
     useful_data.loc[useful_data['home_ownership'].isin([5, 6, 7]) == True, 'home_ownership'] = 1
     
     useful_data['4.2.1.1.1'] = useful_data['4.2.1.1.1'] * useful_data['home_ownership']
-   
+    
     # save to dictionary
     hhspenddata[year]  = useful_data
     
