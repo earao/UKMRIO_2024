@@ -139,14 +139,14 @@ def make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta):
       
   return yhh_wide
 
-def make_y_regions_2023(wd, hhspenddata3, regions, regpophholdsyr, newY, years):
+def make_y_regions(wd, hhspenddata3, regions, regpophholdsyr, newY, years):
   y_regions={}
   ytemp = np.zeros((np.size(newY[2001],0),112))
   filepath = wd + 'data/raw/BEIS energy/'
-  file = os.path.join(filepath, 'Sub-national_energy_consumption_statistics_2005-2020.xlsx')
+  file = os.path.join(filepath, 'Sub-national_energy_consumption_statistics_2005-2021.xlsx')
   gas_prop = pd.read_excel(file, sheet_name = 'reg_prop_gas', index_col = 0)
   elc_prop = pd.read_excel(file, sheet_name = 'reg_prop_elec', index_col = 0)
-  nipop = [1686000,1693000,1701000,1709000,1721000,1735000,1752000,1770000,1786000,1799000,1810000,1819000,1827000,1835000,1846000,1857000,1867000,1876000,1885000,1896000]
+  nipop = [1686000,1693000,1701000,1709000,1721000,1735000,1752000,1770000,1786000,1799000,1810000,1819000,1827000,1835000,1846000,1857000,1867000,1876000,1885000,1896000,1903175]
   for y, yr in enumerate(years):
 #    totalhholds = np.sum(hhspenddata3[yr].iloc[:,0],0)
     totalhholdspend = np.sum(hhspenddata3[yr].loc[:,'1.1.1 Bread and cereals':],0)
@@ -224,7 +224,7 @@ def make_y_regions_2023(wd, hhspenddata3, regions, regpophholdsyr, newY, years):
 # make_y_hh_109
 # make_y_regions_2023
 
-def make_y_countries_2023(y_regions,years):
+def make_y_countries(y_regions,years):
   y_England={}
   y_N_Ireland={}
   y_Scotland={}
@@ -743,10 +743,10 @@ def add_pop_factors(reglaspropyr,regpophholdsyr,newY,regions,years):
  
  return reglaspropyr
 
-def correct_la_spend_props_gas_elec_2023(reglaspropyr,regions,regions_lc,years,wd):
+def correct_la_spend_props_gas_elec(reglaspropyr,regions,regions_lc,years,wd):
   
   filepath = wd + 'data/raw/BEIS energy/'
-  file = os.path.join(filepath, 'Sub-national_energy_consumption_statistics_2005-2020.xlsx')
+  file = os.path.join(filepath, 'Sub-national_energy_consumption_statistics_2005-2021.xlsx')
   for i,r in enumerate(regions_lc):
     gas_prop = pd.read_excel(file, sheet_name = [r+'_prop_gas'], index_col = 0)
     elc_prop = pd.read_excel(file, sheet_name = [r+'_prop_elec'], index_col = 0)
@@ -898,6 +898,8 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
          temp2['LAD_code'] = temp2.index.get_level_values(0)
          temp2['OAC_code'] = temp2.index.get_level_values(1)
          temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
+         
+         regoacs[r] = temp2
           
        else:
          
@@ -918,7 +920,7 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
          temp2['OAC_code'] = temp2.index.get_level_values(1)
          temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
          
-       regoacs[r] = temp2
+         regoacs[r] = temp2
          
     regoacsyr[yr] = regoacs
    
