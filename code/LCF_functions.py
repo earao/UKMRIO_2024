@@ -235,7 +235,7 @@ def removeoutliers(hhspenddata2,years):
 # replaces spends that are larger than 4 Standard Deviations from mean with a value exactly 4 standard deviations from mean  
   for yr in years:
     
-    for i in range(17,np.size(hhspenddata2[yr],1)):
+    for i in range(18,np.size(hhspenddata2[yr],1)):
       stdev4 = np.std(hhspenddata2[yr].iloc[:,i][hhspenddata2[yr].iloc[:,i]!=0])*4
       hhspenddata2[yr].iloc[:,i] = np.where(hhspenddata2[yr].iloc[:,i] > stdev4,stdev4,hhspenddata2[yr].iloc[:,i])
     
