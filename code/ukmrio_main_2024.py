@@ -36,23 +36,25 @@ ons_filepath = wd + 'data/raw/ONS/'
 iea_filepath = wd + 'data/raw/IEA/'
 uk_energy_filepath = wd + 'data/processed/uk energy/'
 inputs_filepath = wd + 'data/model_inputs/'
-results_filepath = wd + 'temp_anne_outputs/results_2024/'
+results_filepath = wd + 'outputs/results_2024/'
 ons_name = 'SU_114  ITR 9 A 1997-2021.xlsx'
 ons_year = '2024'
 exiobase_filepath = wd + 'EXIOBASE/'
 edgar_filepath = wd + 'data/raw/EDGAR/'
 
-ayears = np.array([1990,1995,2005,2010,2013,2014,2015])
+# ayears = np.array([1990,1995,2005,2010,2013,2014,2015])
 oldyrs = np.array(range(1990,1997))
 exioyrs = np.array(range(1995,2022))
 newyrs = np.array(range(1997,2022))
 yrs = np.array(range(1990,2022))
 
-(n_supply,n_use,n_final_demand,n_exports,dom_use,com_use,conc) = ons.load_io_data(wd, ons_filepath,newyrs,ons_year,ons_name)
+#(n_supply,n_use,n_final_demand,n_exports,dom_use,com_use,conc) = ons.load_io_data(wd, ons_filepath,newyrs,ons_year,ons_name)
+(n_supply,n_use,n_final_demand,n_exports,analytic_data,conc) = ons.load_io_data2(wd, ons_filepath,newyrs,ons_year,ons_name)
 (o_supply,o_use,o_final_demand,o_exports) = ons.load_old_io_data(ons_filepath)
 (n_use,n_final_demand) = ons.remove_fd_negatives(n_use,n_final_demand,newyrs,112)
 
-(dom_use,com_use) = ons.align_analytic_data(dom_use,com_use,conc)
+#(dom_use,com_use) = ons.align_analytic_data(dom_use,com_use,conc)
+(dom_use,com_use) = ons.align_analytic_data2(analytic_data,conc)
  
 for yr in range(1992,1997):
     o_final_demand[yr].loc['Total Intermediate consumption'] = np.sum(o_final_demand[yr],0)
@@ -95,11 +97,14 @@ currency = pd.read_excel(file, sheet_name = 'currency', header = 4, index_col=0,
 
 (S,U,Y,v) = uk.convert_to_gbp(S,U,Y,v,yrs,meta,currency)
 
-domprop = uk.make_domprop(com_use,dom_use,use,final_demand,ayears,yrs,conc)
+#domprop = uk.make_domprop(com_use,dom_use,use,final_demand,ayears,yrs,conc)
+
+domprop = uk.make_domprop2(com_use,dom_use,use,final_demand,yrs,conc)
 
 (imp_to_dom_prop, exp_fm_dom_prop, imp_to_dfd_prop) = uk.make_exio_props(U,Y,yrs,meta)
 
-(domuse,rowuse,dom_dom_fd,ex_from_dom,imp_dom_fd) = uk.split_tables(yrs,domprop,use,supply,imp_to_dom_prop,meta,final_demand,exp_fm_dom_prop,exports,imp_to_dfd_prop)
+#(domuse,rowuse,dom_dom_fd,ex_from_dom,imp_dom_fd) = uk.split_tables(yrs,domprop,use,supply,imp_to_dom_prop,meta,final_demand,exp_fm_dom_prop,exports,imp_to_dfd_prop)
+(domuse,rowuse,dom_dom_fd,ex_from_dom,imp_dom_fd) = uk.split_tables2(yrs,domprop,use,supply,imp_to_dom_prop,meta,final_demand,exp_fm_dom_prop,exports,imp_to_dfd_prop)
   
 (balancer,true_row_sum,true_col_sum) = uk.balancer_prep(use,supply,v,domuse,rowuse,dom_dom_fd,ex_from_dom,imp_dom_fd,Y,U,S,yrs,meta)
 
@@ -113,6 +118,9 @@ Y = uk.correctY(Y,final_demand,yrs)
 (uk_ghg_sectors,uk_co2_sectors,uk_ghg_direct,uk_co2_direct) = gas.make_UK_emissions(ons_filepath,yrs)
 ghg = gas.make_ghg_382(exioGHG,uk_ghg_sectors,ons_filepath,yrs,meta)
 co2 = gas.make_co2_382(exioCO2,uk_co2_sectors,ons_filepath,yrs,meta)
+
+uk_foot = {}
+uk_foot['ghg'] = uk.footprint(ghg,U,S,Y,yrs,meta)
 
 #make water stressors
 (WATgrn_cons,WATblu_cons,WATblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct) = water.make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath)
@@ -173,20 +181,19 @@ for data in ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct'
 item_list = ['S', 'U', 'Y', 'co2', 'uk_co2_direct', 'ghg', 'mat', 'bio', 'ore', 'nmm', 'ffl', 
              'WATgrn_cons', 'WATblu_cons', 'WATblu_wdrl', 'nrg', 'uk_nrg_direct']
 
-
 for data in item_list:
-    stressor_writer = pd.ExcelWriter(results_filepath + data + '.xlsx')
+    stressor_writer = pd.ExcelWriter(inputs_filepath + data + '.xlsx')
     temp = cp.copy(eval(data))
     for yr in yrs:
         temp[yr].to_excel(stressor_writer, str(yr))
     stressor_writer.save() 
 
 # save as pickle file
-for data in item_list:
+for data in item_list[:3]:
     pickle.dump(eval(data), open(results_filepath + data + ".p", "wb" ) )
     
 for data in item_list[3:] + ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct']:
-    pickle.dump(eval(data), open(inputs_filepath + data.lower() + ".p", "wb" ) )
+    pickle.dump(eval(data), open(results_filepath + data.lower() + ".p", "wb" ) )
 
 
 # save meta
