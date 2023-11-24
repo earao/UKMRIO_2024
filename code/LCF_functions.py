@@ -786,7 +786,7 @@ def make_la_spend_props_by_region_year(reglaspendyr,regions,years):
 
   return reglaspropyr
 
-def make_la_spends_pop_by_region_year_2023(regoacsyr,oacyrspends,regions,years):
+def make_la_spends_pop_by_region_year(regoacsyr,oacyrspends,regions,years):
   
   reglaspendyr = {}
   regpophholdsyr = {}
@@ -918,9 +918,9 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
          temp2['OAC_code'] = temp2.index.get_level_values(1)
          temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
          
-         regoacs[r] = temp2
+       regoacs[r] = temp2
          
-       regoacsyr[yr] = regoacs
+    regoacsyr[yr] = regoacs
    
   yr = 2021
   
@@ -931,7 +931,7 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
   popfile = os.path.join(census_filepath, 'oa2021pop.csv')
   popew = pd.read_csv(popfile, encoding="iso8859_15", index_col = 0)
   hhfile = os.path.join(census_filepath, 'oa2021hhold.csv')
-  hhew = pd.read_csv(hhfile, encoding="iso8859_15", index_col = 0)
+  hhew = pd.read_csv(hhfile,index_col = 0)
   
   oac2021pophh =  oac2011pophh.join(lookup)
   oac2021pophh = oac2021pophh.drop(['pop','hholds'],axis=1) 
@@ -987,7 +987,7 @@ def make_y_regional(region_str, region_dict, y_regions, years):
               columns=y_regions[str(yr) + '_' + reg_no].columns)
   return y_regional
 
-def makeoacspends_2023(hhspenddata3,oac_none_years,oac_2001_years,oac_2011_years):
+def makeoacspends(hhspenddata3,oac_none_years,oac_2001_years,oac_2011_years):
   
   oacyrspends = {}
   oacyrmeta = {}
