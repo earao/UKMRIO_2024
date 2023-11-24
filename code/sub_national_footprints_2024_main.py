@@ -14,7 +14,6 @@ import os
 df = pd.DataFrame
 import LCF_functions as lcf
 import pickle
-import demand_functions as dm
 import defra_functions as defra
 import ukmrio_functions as uk
 import census_functions as cs
@@ -64,10 +63,10 @@ Y=Y2
 
 total_Yhh_109 = lcf.make_Yhh_109_34(Y,years,meta) 
 
-coicop_exp_tot = lcf.make_totals_2023(hhspenddata2,years)
+coicop_exp_tot = lcf.make_totals(hhspenddata2,years)
 
 coicop_exp_tot2 = lcf.convert_exp_tot_sizes(coicop_exp_tot,concs_dict,years,'456_to_105')
-coicop_exp_tot3 = lcf.make_balanced_totals_2023(coicop_exp_tot2,total_Yhh_112,concs_dict,years)  # change to 109? No!
+coicop_exp_tot3 = lcf.make_balanced_totals(coicop_exp_tot2,total_Yhh_109,concs_dict,years)
 
 yhh_wide = lcf.make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta)
 newY = lcf.make_new_Y_105(Y,yhh_wide,years)
