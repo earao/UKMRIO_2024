@@ -95,28 +95,28 @@ for yr in list(hhspenddata3.keys()):
 (reglaspendyr,regpophholdsyr) = lcf.make_la_spends_pop_by_region_year(regoacsyr,oacyrspends,regions,years) 
 reglaspendyr = lcf.correct_reglaspendyr_zero(reglaspendyr,regions,years)                 
 reglaspropyr = lcf.make_la_spend_props_by_region_year(reglaspendyr,regions,years)    
-reglaspropyr = lcf.correct_la_spend_props_gas_elec_2023(reglaspropyr,regions,regions_lc,years,wd)
+reglaspropyr = lcf.correct_la_spend_props_gas_elec(reglaspropyr,regions,regions_lc,years,wd)
 reglaspropyr = lcf.add_pop_factors(reglaspropyr,regpophholdsyr,newY,regions,years)
 
-y_regions = lcf.make_y_regions_2023(wd,hhspenddata3,regions,regpophholdsyr,newY,years)
+y_regions = lcf.make_y_regions(wd,hhspenddata3,regions,regpophholdsyr,newY,years)
 
-defra_ghg_uk = defra.makeukresults2023(wd,S,U,Y,newY,coicop_exp_tot2,meta,ghg,uk_ghg_direct,'ghg',allyears,years)
+defra_ghg_uk = defra.makeukresults(wd,S,U,Y,newY,coicop_exp_tot2,meta,ghg,uk_ghg_direct,'ghg',allyears,years)
 
 y_regional = {}
 for region in regions_lc:
     y_regional[region] = lcf.make_y_regional(region, region_dict, y_regions, years)
         
-(y_England,y_N_Ireland,y_Scotland,y_Wales) = lcf.make_y_countries_2023(y_regions,years)
+(y_England,y_N_Ireland,y_Scotland,y_Wales) = lcf.make_y_countries(y_regions,years)
 
 defra_ghg_reg = {}
 for country in ['England', 'Scotland', 'Wales', 'Northern Ireland']:
     y_country = eval('y_' + country.replace('Northern ', 'N_'))
-    defra_ghg_reg[country] = defra.makeregionresults2023(S,U,Y,newY,y_country,meta,ghg,defra_ghg_uk['direct'],'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,country)
+    defra_ghg_reg[country] = defra.makeregionresults(S,U,Y,newY,y_country,meta,ghg,defra_ghg_uk['direct'],'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,country)
 
 reg_england = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West']
 for reg in reg_england:
     reg_lower = reg.replace(' and The Humber', '').replace(' ', '_').lower()
-    defra_ghg_reg[reg] = defra.makeregionresults2023(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
+    defra_ghg_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
                                                            'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg)
 
 file = os.path.join(census_filepath, 'laregionlookup2020.xls')   
