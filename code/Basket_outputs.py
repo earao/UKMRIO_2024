@@ -114,3 +114,9 @@ for year in range(2018, 2022):
     basket_price = basket_price.join(temp2[[year]])
 
 basket_price = basket_price.sort_values('order').drop('order', axis=1).dropna(how='all')
+
+basket_change = pd.DataFrame(index=basket_price.index)
+comp_year = basket_price[2018]
+for year in range(2018, 2022):
+    basket_change[year] = basket_price[year] / comp_year * 100
+    
