@@ -9,6 +9,8 @@ import pandas as pd
 from sys import platform
 import pickle
 import copy as cp
+import calendar
+import os
 
 # set working directory
 # make different path depending on operating system
@@ -21,7 +23,7 @@ else:
 # define filepaths
 data_filepath = wd + 'data/'
 outputs_filepath = wd + 'outputs/'
-
+'''
 # load data
 hhd_ghg = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds.p', 'rb')) # emissions by household in survey
 multipliers = pickle.load(open(outputs_filepath + 'results_2024/GHG_multipliers.p', 'rb'))
@@ -90,17 +92,50 @@ for year in range(cpi.columns.min(), 2022):
 ## Basket of goods ##
 #####################
 
-# Basket data: https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
+# Basket data (not used here, does not contain all items): https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
+# Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
+years = list(range(2018, 2022))
 # import basket price
 temp = pd.read_excel(data_filepath + 'raw/Basket_data/2023_basket.xlsx', sheet_name='averageprice', index_col=0).dropna(axis=0, how='all')
 # make yearly average
 temp.columns = [str(x)[:4] for x in temp.columns]
 temp = temp.mean(axis=1, level=0, skipna=True)
 
+'''
+# import item prices
+price_dir = data_filepath + 'raw/Basket_data/Prices/'
+files = os.listdir(price_dir)
+prices = pd.DataFrame()
+for file in files:
+    prices = prices.append(pd.read_csv(price_dir + file))
+    print(file)
+    
+prices['price_w'] = 
+
+
+# import item weights
+weight_dir = data_filepath + 'raw/Basket_data/Weights/'
+files = os.listdir(weight_dir)
+weights = pd.DataFrame()
+for file in files:
+    weights.append(pd.DaraFrame(weight_dir + file))
+
+
+
+
+'''
 # import lookup to LCFS
-lookup = pd.read_csv(data_filepath + 'lookups/basket_id_lookup.csv').set_index('ITEM_ID').fillna('')
+lookup = pd.read_csv(data_filepath + 'lookups/basket_id_lookup.csv').fillna('')
 lookup['Product'] = lookup['ITEM_DESC'] + ' ' + lookup['WEIGHT\SIZE']
+lookup['ITEM_ID'] = [str(x).replace(' ', '') for x in lookup['ITEM_ID']]
+
+# add lookup to weights
+weights['ITEM_ID'] = [str(x).replace(' ', '') for x in weights['ITEM_ID']]
+weights2 = weights.dropna(axis=1, how='all').merge(lookup, on='ITEM_ID', how='left')
+
+wieghts3 = weights2[['order', 'ITEM_ID', 'ITEM_DESC_x', 'ITEM_DESC_y', 'lcfs']].drop_duplicates()
+wieghts3 = wieghts3[wieghts3.isna().any(axis=1)]
 
 # calculate basket emissions
 temp = temp.join(lookup[['Product', 'lcfs', 'order']]).set_index(['lcfs', 'Product'])
@@ -115,11 +150,11 @@ basket_price = basket_price.sort_values('order').drop('order', axis=1).dropna(ho
 
 basket_change = pd.DataFrame(index=basket_price.index)
 comp_year = cp.copy(basket_price)
-for year in range(2019, 2022):
+for year in years[1:]:
     comp_year.loc[comp_year[2018].isna() == True, 2018] = comp_year[year]
 comp_year = comp_year[2018]
 
-for year in range(2018, 2022):
+for year in years:
     basket_change[year] = basket_price[year] / comp_year * 100
 
 ##############
@@ -129,3 +164,4 @@ for year in range(2018, 2022):
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
+'''
