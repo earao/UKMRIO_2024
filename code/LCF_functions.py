@@ -104,7 +104,7 @@ def make_new_Y_105(Y,yhh_wide,years):
   
   return newY
 
-def make_totals_2023(hhspenddata,years):
+def make_totals(hhspenddata,years):
   
   coicop_exp_tot = {}
   
@@ -228,7 +228,7 @@ def make_y_regions_2023(wd, hhspenddata3, regions, regpophholdsyr, newY, years):
 # convert43to41
 # make_balanced_totals_2023
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # make_y_regions_2023
 
@@ -269,7 +269,7 @@ def removeoutliers(hhspenddata2,years):
 # convert_exp_tot_sizes
 # make_balanced_totals_2023
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 
@@ -429,7 +429,7 @@ def processdataforscotdecile(ghg_mults,hhspenddata3,years):
 # convert_exp_tot_sizes
 # make_balanced_totals_2023
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 
@@ -707,7 +707,7 @@ def popoacfoots(footdata,years):
 # convert_exp_tot_sizes
 # make_balanced_totals_2023
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 # make_y_countries_2023	
