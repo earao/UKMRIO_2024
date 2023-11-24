@@ -119,14 +119,14 @@ for reg in reg_england:
     defra_ghg_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
                                                            'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg)
 
-file = os.path.join(census_filepath, 'laregionlookup2020.xls')   
+file = os.path.join(census_filepath, 'laregionlookup2021.xls')   
 LAcodesnames = pd.read_excel(file, header = 4, index_col=0)
 oac01_names = pd.read_excel(os.path.join(census_filepath, 'oac2001.xlsx'), sheet_name=None, index_col = 0)
 oac11_names = pd.read_excel(os.path.join(census_filepath, 'oac2011.xlsx'), sheet_name=None, index_col = 0)
 
 ghg_reg_las = {}; oac_lookup = {}
 for reg in reg_england + ['Scotland', 'Wales']:
-    ghg_reg_las[reg], oac_lookup[reg] = defra.makelaresults2023(defra_ghg_reg[reg],reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,reg,years,concs_dict)
+    ghg_reg_las[reg], oac_lookup[reg] = defra.makelaresults(defra_ghg_reg[reg],reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,reg,years,concs_dict)
     
 for reg in reg_england:
     defra.printdefradata(reg,results_filepath,years,[defra_ghg_reg[reg]],['ghg'])
