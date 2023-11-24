@@ -189,7 +189,7 @@ def makeregionresults(S,U,Y,newY,Yregion,meta,stressor,direct,indicator,years,co
     else:
         drct = np.zeros((np.size(direct,0),len(years)))
     pop = np.zeros((2,len(years)))
-    nipop = [1686000,1693000,1701000,1709000,1721000,1735000,1752000,1770000,1786000,1799000,1810000,1819000,1827000,1835000,1846000,1857000,1867000,1876000,1885000,1896000]
+    nipop = [1686000,1693000,1701000,1709000,1721000,1735000,1752000,1770000,1786000,1799000,1810000,1819000,1827000,1835000,1846000,1857000,1867000,1876000,1885000,1896000,1903175]
   
     for i, yr in enumerate(years):
         print(yr)
@@ -446,73 +446,7 @@ def regioncheck2022(defra_ghg_north_east,defra_ghg_north_west,defra_ghg_yorkshir
     return check
 
 
-
-def makelaresults2022(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict):
-    la_foot = {}
-    la_names = reglaspropyr[2019][Region_Name].index
-    for la in la_names:
-        coicop = np.zeros((111,len(years)))
-        reg = np.zeros((15,111))
-        drct = np.zeros((4,len(years)))
-        pop = np.zeros((3,len(years)))
-        la_foot_temp = {}
-        pop[0] = defra_region_result['population'].iloc[0,:]
-        for n, yr in enumerate(years):
-            coicopprop = reglaspropyr[yr][Region_Name].loc[la].values  
-            reg = defra_region_result[str(yr)+'_reg']*coicopprop
-            la_foot_temp[str(yr)+'_reg'] = df(reg, columns = defra_region_result[str(yr)+'_reg'].columns, index = defra_region_result[str(yr)+'_reg'].index)
-            drct[0,n] = defra_region_result['direct'].loc['Consumer expenditure gas',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.2 Gas')]]
-            drct[1,n] = defra_region_result['direct'].loc['Consumer expenditure liquid fuel',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.3 Liquid fuels')]]
-            drct[2,n] = defra_region_result['direct'].loc['Consumer expenditure solid fuel',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.4 Solid fuels')]]
-            drct[3,n] = defra_region_result['direct'].loc['Consumer expenditure travel',yr]*reglaspropyr[yr][Region_Name].loc[la,[('7.2.2 Fuels and lubricants for personal transport equipment')]]
-            
-            pop[1,n] = np.sum(regpophholdsyr[yr][Region_Name].loc[:,'pop'])
-            pop[2,n] = regpophholdsyr[yr][Region_Name].loc[la,'pop']
-            oac=df(regoacsyr[yr][Region_Name].loc[la,'pop'])
-            if yr < 2014:
-                for i, c in enumerate(regoacsyr[yr][Region_Name].loc[la].index):
-                    oac.loc[c,'OAC name'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                    if oacyrmeta[yr][Region_Name].iloc[i,2] > 19:
-                        oac.loc[c,'OAC code used'] = c
-                        oac.loc[c,'OAC name used'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                    elif oacyrmeta[yr][Region_Name].iloc[i,1] > 19:
-                        oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].index[i][1]
-                        oac.loc[c,'OAC name used'] = oac01_names['Group'].loc[oacyrmeta[yr][Region_Name].index[i][1], 'Group name']
-                    elif oacyrmeta[yr][Region_Name].iloc[i,0] > 19:
-                        oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].index[i][0]
-                        oac.loc[c,'OAC name used'] = oac01_names['Supergroup'].loc[int( oacyrmeta[yr][Region_Name].index[i][0]), 'Supergroup name']
-                    else:
-                        oac.loc[c,'OAC code used'] = Region_Name
-                        oac.loc[c,'OAC name used'] = [Region_Name +' average']                            
-            else:
-                  for i, c in enumerate(regoacsyr[yr][Region_Name].loc[la].index):
-                         oac.loc[c,'OAC name'] = oac11_names['Subgroup'].loc[c, 'Subgroup name']
-                         if oacyrmeta[yr][Region_Name].iloc[i,2] > 19:
-                             oac.loc[c,'OAC code used'] = c
-                             oac.loc[c,'OAC name used'] = oac11_names['Subgroup'].loc[c, 'Subgroup name']
-                         elif oacyrmeta[yr][Region_Name].iloc[i,1] > 19:
-                             oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].index[i][1]
-                             oac.loc[c,'OAC name used'] = oac11_names['Group'].loc[oacyrmeta[yr][Region_Name].index[i][1], 'Group name']
-                         elif oacyrmeta[yr][Region_Name].iloc[i,0] > 19:
-                             oac.loc[c,'OAC code used'] =oacyrmeta[yr][Region_Name].index[i][0]
-                             oac.loc[c,'OAC name used'] = oac11_names['Supergroup'].loc[int( oacyrmeta[yr][Region_Name].index[i][0]), 'Supergroup name']
-                         else:
-                             oac.loc[c,'OAC code used'] = Region_Name 
-                             oac.loc[c,'OAC name used'] = [Region_Name +' average']   
-              
-        la_foot_temp['coicop'] = df(coicop, index = defra_region_result['coicop'].iloc[0:115].index, columns = years)
-        la_foot_temp['direct'] = df(drct, index = defra_region_result['direct'].index, columns = years)
-        la_foot_temp['population'] = df(pop, index = ['United Kingdom',Region_Name,LAcodesnames.loc[la,'la_name']], columns = years)        
-        
-        la_foot[LAcodesnames.loc[la,'la_name']] = la_foot_temp
-        
-    return la_foot
-
-
-
-
-
-def makelaresults2023(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict):
+def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict):
     la_foot = {}
     oac_lookup = {}
     la_names = reglaspropyr[2020][Region_Name].index
@@ -579,12 +513,6 @@ def makelaresults2023(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnam
         oac_lookup[LAcodesnames.loc[la,'la_name']] = oac_lookup_temp
         
     return (la_foot,oac_lookup)
-
-
-
-
-
-
          
 
 def makeukresultscc(S,U,Y,newY,coicop_exp_tot,meta,stressor,direct,indicator,allyears,years):
@@ -748,88 +676,6 @@ def makeregionresultscc(S,U,Y,newY,Yregion,pop_region,oa_pop,name,meta,stressor,
 
     return defra_foot
 
-def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oac01_names,oac11_names,Region_Name,years,concs_dict2):
-    la_foot = {}
-    la_names = reglaspropyr[2018][Region_Name].index
-    for la in la_names:
-        coicop = np.zeros((307,len(years)))
-        ind = np.zeros((112,33))
-        prd = np.zeros((112,33))
-        reg = np.zeros((15,33))
-        drct = np.zeros((2,len(years)))
-        pop = np.zeros((3,len(years)))
-        la_foot_temp = {}
-        for i, yr in enumerate(years):
-            coicop[:,i] =  defra_region_result['coicop'].iloc[0:307,i].values*reglaspropyr[yr][Region_Name].loc[la].values  
-            coicop33prop = np.dot(coicop[:,i],concs_dict2['C307_to_C33'])/np.sum(defra_region_result[str(yr)+'_reg'].iloc[:,0:33])
-            ind = defra_region_result[str(yr)+'_ind'].iloc[:,0:33].values*coicop33prop.values
-            prd = defra_region_result[str(yr)+'_prd'].iloc[:,0:33].values*coicop33prop.values
-            reg = defra_region_result[str(yr)+'_reg'].iloc[:,0:33].values*coicop33prop.values
-            la_foot_temp[str(yr)+'_ind'] = df(ind, columns = coicop33prop.index, index = defra_region_result[str(yr)+'_ind'].index)
-            la_foot_temp[str(yr)+'_prd'] = df(prd, columns = coicop33prop.index, index = defra_region_result[str(yr)+'_prd'].index)
-            la_foot_temp[str(yr)+'_reg'] = df(reg, columns = coicop33prop.index, index = defra_region_result[str(yr)+'_reg'].index)
-            drct[0,i] = defra_region_result['direct'].loc['Consumer expenditure - not travel',yr]*reglaspropyr[yr][Region_Name].loc[la,'4.4.2']
-            drct[1,i] = defra_region_result['direct'].loc['Consumer expenditure - travel',yr]*reglaspropyr[yr][Region_Name].loc[la,'7.2.2.1']
-            pop[1,i] = np.sum(regpophholdsyr[yr][Region_Name].loc[:,'pop'])
-            pop[2,i] = regpophholdsyr[yr][Region_Name].loc[la,'pop']
-            oac=df(regoacsyr[yr][Region_Name].loc[la,'pop'])
-            if yr < 2014:
-                if yr == 2008:
-                     for i, c in enumerate(regoacsyr[yr][Region_Name].loc[la].index):
-                         oac.loc[c,'OAC name'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                         if oacyrmeta[yr][Region_Name].loc[c,'oac3_count'] > 19:
-                            oac.loc[c,'OAC code used'] = c
-                            oac.loc[c,'OAC name used'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                         elif oacyrmeta[yr][Region_Name].loc[c,'oac2_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c,'oac2'].lower()
-                            oac.loc[c,'OAC name used'] = oac01_names['Group'].loc[oacyrmeta[yr][Region_Name].loc[c,'oac2'].lower(), 'Group name']
-                         elif oacyrmeta[yr][Region_Name].loc[c,'oac1_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c,'oac1']
-                            oac.loc[c,'OAC name used'] = oac01_names['Supergroup'].loc[int(oacyrmeta[yr][Region_Name].loc[c,'oac1']), 'Supergroup name']
-                         else:
-                            oac.loc[c,'OAC code used'] = Region_Name
-                            oac.loc[c,'OAC name used'] = [Region_Name +' average']
-                else:
-                    for i, c in enumerate(regoacsyr[yr][Region_Name].loc[la].index):
-                        oac.loc[c,'OAC name'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                        if oacyrmeta[yr][Region_Name].loc[c.upper(),'oac3_count'] > 19:
-                            oac.loc[c,'OAC code used'] = c
-                            oac.loc[c,'OAC name used'] = oac01_names['Subgroup'].loc[c, 'Subgroup name']
-                        elif oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2'].lower()
-                            oac.loc[c,'OAC name used'] = oac01_names['Group'].loc[oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2'].lower(), 'Group name']
-                        elif oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1']
-                            oac.loc[c,'OAC name used'] = oac01_names['Supergroup'].loc[int(oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1']), 'Supergroup name']
-                        else:
-                            oac.loc[c,'OAC code used'] = Region_Name 
-                            oac.loc[c,'OAC name used'] = [Region_Name +' average']                            
-            else:
-                 for i, c in enumerate(regoacsyr[yr][Region_Name].loc[la].index):
-                        oac.loc[c,'OAC name'] = oac11_names['Subgroup'].loc[c, 'Subgroup name']
-                        if oacyrmeta[yr][Region_Name].loc[c.upper(),'oac3_count'] > 19:
-                            oac.loc[c,'OAC code used'] = c
-                            oac.loc[c,'OAC name used'] = oac11_names['Subgroup'].loc[c, 'Subgroup name']
-                        elif oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2'].lower()
-                            oac.loc[c,'OAC name used'] = oac11_names['Group'].loc[oacyrmeta[yr][Region_Name].loc[c.upper(),'oac2'].lower(), 'Group name']
-                        elif oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1_count'] > 19:
-                            oac.loc[c,'OAC code used'] = oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1']
-                            oac.loc[c,'OAC name used'] = oac11_names['Supergroup'].loc[int(oacyrmeta[yr][Region_Name].loc[c.upper(),'oac1']), 'Supergroup name']
-                        else:
-                            oac.loc[c,'OAC code used'] = Region_Name 
-                            oac.loc[c,'OAC name used'] = [Region_Name +' average']   
-        
-            la_foot_temp[str(yr)+'_oac'] = oac
-        pop[0] = [59113000, 	 59365700, 	 59636700, 	 59950400, 	 60413300, 	 60827100, 	 61319100, 	 61823800, 	 62260500, 	 62759500, 	 63285100, 	 63705000, 	 64105700, 	 64596800, 	 65110000, 	 65648100, 	 66040200, 	 66435600]
-        
-        la_foot_temp['coicop'] = df(coicop, index = defra_region_result['coicop'].iloc[0:307].index, columns = years)
-        la_foot_temp['direct'] = df(drct, index = defra_region_result['direct'].index, columns = years)
-        la_foot_temp['population'] = df(pop, index = ['United Kingdom',Region_Name,LAcodesnames.loc[la,'la_name']], columns = years)        
-        
-        la_foot[LAcodesnames.loc[la,'la_name']] = la_foot_temp
-        
-    return la_foot
 
 def regioncheck(defra_ghg_north_east,defra_ghg_north_west,defra_ghg_yorkshire_and_the_humber,defra_ghg_east_midlands,defra_ghg_west_midlands,defra_ghg_east,defra_ghg_london,defra_ghg_south_east,defra_ghg_south_west,defra_ghg_scotland,defra_ghg_wales,defra_ghg_northern_ireland,years):
     check={}
@@ -877,6 +723,7 @@ def regioncheck(defra_ghg_north_east,defra_ghg_north_west,defra_ghg_yorkshire_an
     
         check[yr] = tempcheck
     return check
+
 
 def lacheck(defra_region,region_las,years):
     check={}
