@@ -90,9 +90,9 @@ pickle.dump(regoacsyr, open(results_filepath + "regoacsyr.p", "wb" ))
 # turn OAC classes into string variable
 for yr in list(hhspenddata3.keys()):
     hhspenddata3[yr]['OA class 1'] = hhspenddata3[yr]['OA class 1'].astype(str)
-(oacyrspends,oacyrmeta) = lcf.makeoacspends_2023(hhspenddata3,oac_none_years,oac_2001_years,oac_2011_years)
+(oacyrspends,oacyrmeta) = lcf.makeoacspends(hhspenddata3,oac_none_years,oac_2001_years,oac_2011_years)
 
-(reglaspendyr,regpophholdsyr) = lcf.make_la_spends_pop_by_region_year_2023(regoacsyr,oacyrspends,regions,years) 
+(reglaspendyr,regpophholdsyr) = lcf.make_la_spends_pop_by_region_year(regoacsyr,oacyrspends,regions,years) 
 reglaspendyr = lcf.correct_reglaspendyr_zero(reglaspendyr,regions,years)                 
 reglaspropyr = lcf.make_la_spend_props_by_region_year(reglaspendyr,regions,years)    
 reglaspropyr = lcf.correct_la_spend_props_gas_elec_2023(reglaspropyr,regions,regions_lc,years,wd)
