@@ -37,30 +37,13 @@ def make_21_lookup(census_filepath,s11):
 
 def make_11_lookup(census_filepath):    
     
-    file = os.path.join(census_filepath, 'Output_Area_to_Lower_Layer_Super_Output_Area_to_Middle_Layer_Super_Output_Area_to_Local_Authority_District_(December_2020)_Lookup_in_England_and_Wales.csv')  
-    ew11 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
-    file = os.path.join(census_filepath, 'OA_(2011)_to_OA_(2021)_to_Local_Authority_District_(2022)_for_England_and_Wales_Lookup_(Version_2).csv')  
-    lookupLAD = pd.read_csv(file, encoding="iso8859_15", index_col = 1)
-    file = os.path.join(census_filepath, 'laregionlookup2020.xls')  
-    lookupREG = pd.read_excel(file, header = 4, index_col=0)
-    ew11 = ew11.join(lookupLAD, on='OA11CD')
-    ew11 = ew11.join(lookupREG, on='LAD20CD')
-    ew11 = ew11.rename(index=str, columns={'LSOA11CD': 'LSOA', "MSOA11CD": "MSOA", 'LAD22NM':'LAD_nm',"LAD22CD": "LAD", "region_name":"REG"})
-    ew11 = ew11.drop(['LSOA11NM','MSOA11NM','LAD20CD','LAD20NM','RGN20CD','RGN20NM','OA21CD','ï»¿ObjectId','CHNGIND','LAD22NMW','la_name'], axis=1)
-    
-    file = os.path.join(census_filepath, 'OA_TO_HIGHER_AREAS.csv') 
-    s11 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
-    s11 = s11.reset_index()
-    file = os.path.join(census_filepath, 'scotlandLAD.csv')  
-    lookupLAD = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
-    s11 = s11.merge(lookupLAD, left_on = 'CouncilArea2011Code', right_on='LAD')
-    s11['REG'] = 'Scotland'  
-    s11=s11.rename(index=str, columns={'OutputArea2011Code':'OA11CD',"LAU2011Level2Code": "LSOA", "Settlement2010Code": "MSOA", "Council Area NAME": "LAD_nm" })
-    s11=s11.drop(['Locality2010Code','CouncilArea2011Code'], axis=1)
-    
-    oa_lookup11 = pd.concat([ew11,s11])
-    
-    oa_lookup11.set_index(['OA11CD'],inplace=True)
+    file = os.path.join(census_filepath, 'Output_Area_to_Lower_Layer_Super_Output_Area_to_Middle_Layer_Super_Output_Area_to_Local_Authority_District_2020_Lookup_in_Great_Britain__Classification_Version_2.csv')  
+    temp = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    oa_lookup11 = temp.drop(['OAC11CD','OAC11NM','SOAC11CD','SOAC11NM','LSOA11NM','MSOA11NM','LACCD','LACNM', 'RGN11CD', 'CTRY11CD','CTRY11NM','FID'], axis=1)
+    oa_lookup11 = oa_lookup11.rename(index=str, columns={'LSOA11CD': 'LSOA', "MSOA11CD": "MSOA", 'LAD20NM':'LAD_nm',"LAD20CD": "LAD", "RGN11NM":"REG"})
+        
+    s11 = oa_lookup11[oa_lookup11['REG']=='Scotland']
+    s11.reset_index(inplace=True)
     
     return (oa_lookup11,s11)
   
