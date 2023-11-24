@@ -16,6 +16,23 @@ import copy as cp
 # used in defra_main_2023 #
 ###########################
 
+def make_Yhh_109_34(Y_d,years,meta):
+    
+    total_Yhh_109 = {}
+    col = Y_d[2016].columns[0:34]
+    idx = Y_d[2016].index[0:109]
+    for yr in years:
+        temp = np.zeros(shape = [109,34])
+        
+        for r in range(0,meta['reg']['len']):
+            temp  = temp + Y_d[yr].iloc[r*109:(r+1)*109,0:34].values
+            
+        total_Yhh_109[yr] = df(temp, index =idx, columns =col)
+    
+    return total_Yhh_109
+
+
+
 def convert_hhspend_sizes(hhspenddata,concs_dict,years,size_str):
 
     concs_dict[size_str] = concs_dict[size_str].apply(lambda x: pd.to_numeric(x, errors='coerce')).dropna(axis=0, how='all').dropna(axis=1, how='all')
