@@ -20,13 +20,11 @@ else:
 
 # define filepaths
 data_filepath = wd + 'data/'
-results_filepath = wd + 'outputs/results_2024/'
-lcf_filepath = wd + 'data/raw/LCFS/'
-model_inputs = wd + 'data/model_inputs/'
+outputs_filepath = wd + 'outputs/'
 
 # load data
-hhd_ghg = pickle.load(open(results_filepath + 'GHG_by_hhds.p', 'rb')) # emissions by household in survey
-multipliers = pickle.load(open(results_filepath + 'GHG_multipliers.p', 'rb'))
+hhd_ghg = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds.p', 'rb')) # emissions by household in survey
+multipliers = pickle.load(open(outputs_filepath + 'results_2024/GHG_multipliers.p', 'rb'))
 
 years = list(hhd_ghg.keys())
 
@@ -116,7 +114,18 @@ for year in range(2018, 2022):
 basket_price = basket_price.sort_values('order').drop('order', axis=1).dropna(how='all')
 
 basket_change = pd.DataFrame(index=basket_price.index)
-comp_year = basket_price[2018]
+comp_year = cp.copy(basket_price)
+for year in range(2019, 2022):
+    comp_year.loc[comp_year[2018].isna() == True, 2018] = comp_year[year]
+comp_year = comp_year[2018]
+
 for year in range(2018, 2022):
     basket_change[year] = basket_price[year] / comp_year * 100
-    
+
+##############
+## Save All ##
+##############
+
+equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
+cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
+basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
