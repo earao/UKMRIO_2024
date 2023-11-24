@@ -127,19 +127,11 @@ def make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta):
       conc = np.tile(concs_dict[str(a)],(meta['reg']['len'],1))
       countend = np.sum(np.sum(concs_dict[str(a)+'a']))+countstart
       category_total = np.dot(coicop_exp_tot3[yr],concs_dict[str(a)+'a'])
-      #test1 = np.dot(np.diag(Y[yr].iloc[:,a]),conc)
       test1 = np.dot(conc,np.diagflat(category_total))
-      #test2 = np.tile(np.dot(Y[yr].iloc[:,a],conc),(1590,1))
       test2 = np.tile(np.dot(conc,np.transpose(category_total)),(1,np.size(conc,1)))
       test3 = test1/test2
       test3 = np.nan_to_num(test3, copy=True)
-      #num = np.dot(conc,np.diag(category_total))
-      #test4 = np.multiply(num,test3)
       test4 = np.dot(np.diag(Y[yr].iloc[:,a]),test3)
-      #den = np.dot(np.diag(np.sum(num,1)),concs_dict2[str(a)])
-      #prop = np.divide(num,den)
-      #prop = np.nan_to_num(prop, copy=True)
-      #temp[:,countstart:countend] = (np.dot(np.diag(total_Yhh_106[yr].iloc[:,a]),prop))
       temp[:,countstart:countend] = test4
       col[countstart:countend] = concs_dict[str(a) + 'a'].columns
       countstart = countend
