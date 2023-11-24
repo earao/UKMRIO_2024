@@ -84,7 +84,7 @@ region_dict = dict(zip(regions_lc, list(range(1,13))))
 oa_lookup21 = cs.make_21_lookup(census_filepath,s11)
 oa_lookup01 = cs.make_01_lookup(census_filepath) 
 
-regoacsyr = lcf.make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,census_filepath,regions) # save?
+regoacsyr = lcf.make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census_filepath,regions) # save?
 pickle.dump(regoacsyr, open(results_filepath + "regoacsyr.p", "wb" ))
 
 # turn OAC classes into string variable

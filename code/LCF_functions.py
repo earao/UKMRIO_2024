@@ -811,7 +811,7 @@ def make_la_spends_pop_by_region_year_2023(regoacsyr,oacyrspends,regions,years):
 
   return (reglaspendyr,regpophholdsyr) 
 	
-def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,census_filepath,regions):
+def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census_filepath,regions):
   regoacsyr = {}
   
   file = os.path.join(census_filepath, '2001OAC.csv') 
@@ -869,7 +869,7 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,census_filepath,re
    
   oac2011pophh = oac11.join(pop)
   oac2011pophh = oac2011pophh.join(hhold)
-  oac2011pophh = oac2011pophh.join(oa_lookup11)
+  oac2011pophh = oac2011pophh.join(oa_lookup11) 
         
   for yr in range(2014,2021):
   
@@ -917,10 +917,64 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,census_filepath,re
          temp2['LAD_code'] = temp2.index.get_level_values(0)
          temp2['OAC_code'] = temp2.index.get_level_values(1)
          temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
+         
+         regoacs[r] = temp2
+         
+       regoacsyr[yr] = regoacs
+   
+  yr = 2021
+  
+  f = 'OA_(2011)_to_OA_(2021)_to_Local_Authority_District_(2022)_for_England_and_Wales_Lookup_(Version_2).csv'
+  file = os.path.join(census_filepath, f)
+  lookup = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+  lookup.set_index(['OA11CD'],inplace=True)
+  popfile = os.path.join(census_filepath, 'oa2021pop.csv')
+  popew = pd.read_csv(popfile, encoding="iso8859_15", index_col = 0)
+  hhfile = os.path.join(census_filepath, 'oa2021hhold.csv')
+  hhew = pd.read_csv(hhfile, encoding="iso8859_15", index_col = 0)
+  
+  oac2021pophh =  oac2011pophh.join(lookup)
+  oac2021pophh = oac2021pophh.drop(['pop','hholds'],axis=1) 
+  oac2021pophh =  oac2021pophh.merge(popew, left_on = 'OA21CD', right_index=True)
+  oac2021pophh =  oac2021pophh.merge(hhew, left_on = 'OA21CD', right_index=True)
+  
+  for i,r in enumerate(regions):
+     print(r)
+     temp = oac2021pophh[oac2021pophh['Region/Country Name'] == r]
+     
+     if r == 'Scotland':
+                
+       temp = oac2011pophh[oac2011pophh['Region/Country Name'] == r]
+             
+       f='sape-' +str(yr) +'-persons.xlsx'
+       file = os.path.join(census_filepath, f)
+       sn = 'Table 1a Persons ('+str(yr) +')'
+       data = pd.read_excel(file,sheet_name = sn, skiprows = 5, index_col=0) 
+       newpop = df(data['Unnamed: 3'])
+       LSOApop = temp.groupby('LSOA').sum()
+       newpop2 = newpop.join(LSOApop)
+       popprop = df(newpop2['Unnamed: 3']/newpop2['pop'],columns = ['popprop'])
+       fred = temp.join(popprop,on='LSOA')
+       temp['pop'] = temp['pop']*fred['popprop']
+       temp['hholds'] = temp['hholds']*fred['popprop']
        
-       regoacs[r] = temp2
+       temp2 = temp.groupby(['LAD','Subgroup Code']).sum()
+       temp2['LAD_code'] = temp2.index.get_level_values(0)
+       temp2['OAC_code'] = temp2.index.get_level_values(1)
+       temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
+        
+     else:
+          
+       temp2 = temp.groupby(['LAD','Subgroup Code']).sum()
+       temp2['LAD_code'] = temp2.index.get_level_values(0)
+       temp2['OAC_code'] = temp2.index.get_level_values(1)
+       temp2 = temp2.rename(columns={'Supergroup Code': 'AC supergroup'})
+           
+       
+     regoacs[r] = temp2
     
-    regoacsyr[yr] = regoacs
+  regoacsyr[yr] = regoacs
+    
 
   return regoacsyr
 	
