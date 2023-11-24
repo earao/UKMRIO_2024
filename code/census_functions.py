@@ -14,6 +14,16 @@ df = pd.DataFrame
 # used in sub_national_footprints_2023_main #
 #############################################
 
+def make_21_lookup(census_filepath):    
+    
+    file = os.path.join(census_filepath, 'Output_Area_to_Lower_layer_Super_Output_Area_to_Middle_layer_Super_Output_Area_to_Local_Authority_District_(December_2021)_Lookup_in_England_and_Wales_v3.csv')  
+    temp = pd.read_csv(file, encoding="iso8859_15", index_col = 0)
+    oa_lookup21=temp.drop(['MSOA21NM', 'LSOA21NM', 'LSOA21NMW', 'MSOA21NM', 'MSOA21NMW', 'LAD22NMW', 'ObjectId'], axis=1)
+    oa_lookup21=oa_lookup21.rename(index=str, columns={'LSOA21CD': 'LSOA', "MSOA21CD": "MSOA", 'LAD22NM':'LAD_nm',"LAD22CD": "LAD", "RGN11NM":"REG"})
+
+    return oa_lookup21
+
+
 def make_11_lookup(census_filepath):    
     
     file = os.path.join(census_filepath, 'Output_Area_to_Lower_Layer_Super_Output_Area_to_Middle_Layer_Super_Output_Area_to_Local_Authority_District_2020_Lookup_in_Great_Britain__Classification_Version_2.csv')  
@@ -23,7 +33,7 @@ def make_11_lookup(census_filepath):
 
     return oa_lookup11
   
-def make_01_lookup(census_filepath,oa_lookup11):
+def make_01_lookup(census_filepath):
     
     file = os.path.join(census_filepath, 'OA01_LSOA01_MSOA01_EW_LU.csv')  
     ew01 = pd.read_csv(file, encoding="iso8859_15", index_col = 0)    
