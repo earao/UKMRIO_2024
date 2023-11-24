@@ -16,6 +16,23 @@ import copy as cp
 # used in defra_main_2023 #
 ###########################
 
+def make_Yhh_109_34(Y_d,years,meta):
+    
+    total_Yhh_109 = {}
+    col = Y_d[2016].columns[0:34]
+    idx = Y_d[2016].index[0:109]
+    for yr in years:
+        temp = np.zeros(shape = [109,34])
+        
+        for r in range(0,meta['reg']['len']):
+            temp  = temp + Y_d[yr].iloc[r*109:(r+1)*109,0:34].values
+            
+        total_Yhh_109[yr] = df(temp, index =idx, columns =col)
+    
+    return total_Yhh_109
+
+
+
 def convert_hhspend_sizes(hhspenddata,concs_dict,years,size_str):
 
     concs_dict[size_str] = concs_dict[size_str].apply(lambda x: pd.to_numeric(x, errors='coerce')).dropna(axis=0, how='all').dropna(axis=1, how='all')
@@ -52,7 +69,7 @@ def convert43to41(Y,concs_dict,years):
   
   return Y2
 
-def make_balanced_totals_2023(coicop_exp_tot2,total_Yhh_112,concs_dict,years):
+def make_balanced_totals(coicop_exp_tot2,total_Yhh_112,concs_dict,years):
   
   coicop_exp_tot3 = {}
   
@@ -87,7 +104,7 @@ def make_new_Y_105(Y,yhh_wide,years):
   
   return newY
 
-def make_totals_2023(hhspenddata,years):
+def make_totals(hhspenddata,years):
   
   coicop_exp_tot = {}
   
@@ -209,9 +226,9 @@ def make_y_regions_2023(wd, hhspenddata3, regions, regpophholdsyr, newY, years):
 # convert_hhspend_sizes
 # convert_exp_tot_sizes
 # convert43to41
-# make_balanced_totals_2023
+# make_balanced_totals
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # make_y_regions_2023
 
@@ -235,7 +252,7 @@ def removeoutliers(hhspenddata2,years):
 # replaces spends that are larger than 4 Standard Deviations from mean with a value exactly 4 standard deviations from mean  
   for yr in years:
     
-    for i in range(17,np.size(hhspenddata2[yr],1)):
+    for i in range(18,np.size(hhspenddata2[yr],1)):
       stdev4 = np.std(hhspenddata2[yr].iloc[:,i][hhspenddata2[yr].iloc[:,i]!=0])*4
       hhspenddata2[yr].iloc[:,i] = np.where(hhspenddata2[yr].iloc[:,i] > stdev4,stdev4,hhspenddata2[yr].iloc[:,i])
     
@@ -250,9 +267,9 @@ def removeoutliers(hhspenddata2,years):
 # convert43to41
 # convert_hhspend_sizes
 # convert_exp_tot_sizes
-# make_balanced_totals_2023
+# make_balanced_totals
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 
@@ -410,9 +427,9 @@ def processdataforscotdecile(ghg_mults,hhspenddata3,years):
 # convert43to41
 # convert_hhspend_sizes
 # convert_exp_tot_sizes
-# make_balanced_totals_2023
+# make_balanced_totals
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 
@@ -688,9 +705,9 @@ def popoacfoots(footdata,years):
 # convert43to41
 # convert_hhspend_sizes
 # convert_exp_tot_sizes
-# make_balanced_totals_2023
+# make_balanced_totals
 # make_new_Y_109
-# make_totals_2023
+# make_totals
 # make_y_hh_109
 # removeoutliers
 # make_y_countries_2023	
