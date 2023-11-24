@@ -23,7 +23,7 @@ else:
 # define filepaths
 data_filepath = wd + 'data/'
 outputs_filepath = wd + 'outputs/'
-'''
+
 # load data
 hhd_ghg = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds.p', 'rb')) # emissions by household in survey
 multipliers = pickle.load(open(outputs_filepath + 'results_2024/GHG_multipliers.p', 'rb'))
@@ -96,22 +96,10 @@ for year in range(cpi.columns.min(), 2022):
 # Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
 years = list(range(2018, 2022))
-# import basket price
-temp = pd.read_excel(data_filepath + 'raw/Basket_data/2023_basket.xlsx', sheet_name='averageprice', index_col=0).dropna(axis=0, how='all')
-# make yearly average
-temp.columns = [str(x)[:4] for x in temp.columns]
-temp = temp.mean(axis=1, level=0, skipna=True)
-
-'''
 # import item prices
-price_dir = data_filepath + 'raw/Basket_data/Prices/'
-files = os.listdir(price_dir)
-prices = pd.DataFrame()
-for file in files:
-    prices = prices.append(pd.read_csv(price_dir + file))
-    print(file)
-    
-prices['price_w'] = 
+prices = pd.read_csv(data_filepath + 'processed/average_prices.csv')
+
+
 
 
 # import item weights
@@ -119,12 +107,11 @@ weight_dir = data_filepath + 'raw/Basket_data/Weights/'
 files = os.listdir(weight_dir)
 weights = pd.DataFrame()
 for file in files:
-    weights.append(pd.DaraFrame(weight_dir + file))
+    weights = weights.append(pd.read_csv(weights_dir + file));
+    print(file);
 
 
 
-
-'''
 # import lookup to LCFS
 lookup = pd.read_csv(data_filepath + 'lookups/basket_id_lookup.csv').fillna('')
 lookup['Product'] = lookup['ITEM_DESC'] + ' ' + lookup['WEIGHT\SIZE']
@@ -164,4 +151,3 @@ for year in years:
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
-'''
