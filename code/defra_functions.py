@@ -310,7 +310,7 @@ def printdefradata2(region,results_filepath,years,results,indicator):
     
     return
 
-def lacheck2023(defra_region,region_las,years):
+def lacheck(defra_region,region_las,years):
     check={}
     temppop =  np.zeros((len(region_las),len(years)))
     for j, yr in enumerate(years):
@@ -329,7 +329,7 @@ def lacheck2023(defra_region,region_las,years):
     check['pop'] = df(temppop, columns = years, index = label)
     return check
 
-def regioncheck2023(defra_ghg_reg,years):
+def regioncheck(defra_ghg_reg,years):
     
     check={}
     temppop =  np.zeros((len(defra_ghg_reg),len(years)))
@@ -355,95 +355,6 @@ def regioncheck2023(defra_ghg_reg,years):
 ##################
 # Not sorted yet #
 ##################
-
-def regioncheck2022(defra_ghg_north_east,defra_ghg_north_west,defra_ghg_yorkshire_and_the_humber,defra_ghg_east_midlands,defra_ghg_west_midlands,defra_ghg_east,defra_ghg_london,defra_ghg_south_east,defra_ghg_south_west,defra_ghg_scotland,defra_ghg_wales,defra_ghg_northern_ireland,years):
-    check={}
-    temppop =  np.zeros((12,len(years)))
-    for i, yr in enumerate(years):
-        tempcheck =  np.zeros((12,115))
-        tempcheck[0,:] = np.sum(defra_ghg_north_east[str(yr)+'_reg']).values
-        tempcheck[1,:] = np.sum(defra_ghg_north_west[str(yr)+'_reg']).values
-        tempcheck[2,:] = np.sum(defra_ghg_yorkshire_and_the_humber[str(yr)+'_reg']).values
-        tempcheck[3,:] = np.sum(defra_ghg_east_midlands[str(yr)+'_reg']).values
-        tempcheck[4,:] = np.sum(defra_ghg_west_midlands[str(yr)+'_reg']).values
-        tempcheck[5,:] = np.sum(defra_ghg_east[str(yr)+'_reg']).values
-        tempcheck[6,:] = np.sum(defra_ghg_london[str(yr)+'_reg']).values
-        tempcheck[7,:] = np.sum(defra_ghg_south_east[str(yr)+'_reg']).values
-        tempcheck[8,:] = np.sum(defra_ghg_south_west[str(yr)+'_reg']).values
-        tempcheck[9,:] = np.sum(defra_ghg_scotland[str(yr)+'_reg']).values
-        tempcheck[10,:] = np.sum(defra_ghg_wales[str(yr)+'_reg']).values
-        tempcheck[11,:] = np.sum(defra_ghg_northern_ireland[str(yr)+'_reg']).values
-        tempcheck = df(tempcheck, columns = defra_ghg_north_east[str(yr)+'_reg'].columns, index = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West','Scotland','Wales','Northern Ireland'])
-        
-        tempcheck.iloc[0,31] = tempcheck.iloc[0,31]+defra_ghg_north_east['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[1,31] = tempcheck.iloc[1,31]+defra_ghg_north_west['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[2,31] = tempcheck.iloc[2,31]+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[3,31] = tempcheck.iloc[3,31]+defra_ghg_east_midlands['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[4,31] = tempcheck.iloc[4,31]+defra_ghg_west_midlands['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[5,31] = tempcheck.iloc[5,31]+defra_ghg_east['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[6,31] = tempcheck.iloc[6,31]+defra_ghg_london['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[7,31] = tempcheck.iloc[7,31]+defra_ghg_south_east['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[8,31] = tempcheck.iloc[8,31]+defra_ghg_south_west['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[9,31] = tempcheck.iloc[9,31]+defra_ghg_scotland['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[10,31] = tempcheck.iloc[10,31]+defra_ghg_wales['direct'].loc['Consumer expenditure gas', yr]
-        tempcheck.iloc[11,31] = tempcheck.iloc[11,31]+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure gas', yr]
-        
-        tempcheck.iloc[0,32] = tempcheck.iloc[0,32]+defra_ghg_north_east['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[1,32] = tempcheck.iloc[1,32]+defra_ghg_north_west['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[2,32] = tempcheck.iloc[2,32]+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[3,32] = tempcheck.iloc[3,32]+defra_ghg_east_midlands['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[4,32] = tempcheck.iloc[4,32]+defra_ghg_west_midlands['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[5,32] = tempcheck.iloc[5,32]+defra_ghg_east['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[6,32] = tempcheck.iloc[6,32]+defra_ghg_london['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[7,32] = tempcheck.iloc[7,32]+defra_ghg_south_east['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[8,32] = tempcheck.iloc[8,32]+defra_ghg_south_west['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[9,32] = tempcheck.iloc[9,32]+defra_ghg_scotland['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[10,32] = tempcheck.iloc[10,32]+defra_ghg_wales['direct'].loc['Consumer expenditure liquid fuel', yr]
-        tempcheck.iloc[11,32] = tempcheck.iloc[11,32]+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure liquid fuel', yr]
-    
-        tempcheck.iloc[0,33] = tempcheck.iloc[0,33]+defra_ghg_north_east['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[1,33] = tempcheck.iloc[1,33]+defra_ghg_north_west['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[2,33] = tempcheck.iloc[2,33]+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[3,33] = tempcheck.iloc[3,33]+defra_ghg_east_midlands['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[4,33] = tempcheck.iloc[4,33]+defra_ghg_west_midlands['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[5,33] = tempcheck.iloc[5,33]+defra_ghg_east['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[6,33] = tempcheck.iloc[6,33]+defra_ghg_london['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[7,33] = tempcheck.iloc[7,33]+defra_ghg_south_east['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[8,33] = tempcheck.iloc[8,33]+defra_ghg_south_west['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[9,33] = tempcheck.iloc[9,33]+defra_ghg_scotland['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[10,33] = tempcheck.iloc[10,33]+defra_ghg_wales['direct'].loc['Consumer expenditure solid fuel', yr]
-        tempcheck.iloc[11,33] = tempcheck.iloc[11,33]+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure solid fuel', yr]
-
-        tempcheck.iloc[0,59] = tempcheck.iloc[0,59]+defra_ghg_north_east['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[1,59] = tempcheck.iloc[1,59]+defra_ghg_north_west['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[2,59] = tempcheck.iloc[2,59]+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[3,59] = tempcheck.iloc[3,59]+defra_ghg_east_midlands['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[4,59] = tempcheck.iloc[4,59]+defra_ghg_west_midlands['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[5,59] = tempcheck.iloc[5,59]+defra_ghg_east['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[6,59] = tempcheck.iloc[6,59]+defra_ghg_london['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[7,59] = tempcheck.iloc[7,59]+defra_ghg_south_east['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[8,59] = tempcheck.iloc[8,59]+defra_ghg_south_west['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[9,59] = tempcheck.iloc[9,59]+defra_ghg_scotland['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[10,59] = tempcheck.iloc[10,59]+defra_ghg_wales['direct'].loc['Consumer expenditure travel', yr]
-        tempcheck.iloc[11,59] = tempcheck.iloc[11,59]+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure travel', yr]
-        
-        temppop[0,i] = defra_ghg_north_east['population'].iloc[1,i]
-        temppop[1,i] = defra_ghg_north_west['population'].iloc[1,i]
-        temppop[2,i] = defra_ghg_yorkshire_and_the_humber['population'].iloc[1,i]
-        temppop[3,i] = defra_ghg_east_midlands['population'].iloc[1,i]
-        temppop[4,i] = defra_ghg_west_midlands['population'].iloc[1,i]
-        temppop[5,i] = defra_ghg_east['population'].iloc[1,i]
-        temppop[6,i] = defra_ghg_london['population'].iloc[1,i]
-        temppop[7,i] = defra_ghg_south_east['population'].iloc[1,i]
-        temppop[8,i] = defra_ghg_south_west['population'].iloc[1,i]
-        temppop[9,i] = defra_ghg_scotland['population'].iloc[1,i]
-        temppop[10,i] = defra_ghg_wales['population'].iloc[1,i]
-        temppop[11,i] = defra_ghg_northern_ireland['population'].iloc[1,i]
-        
-        label = ['North East','North West','Yorkshire and the Humber','East Midlands','West Midlands','East','London','South East','South West','Scotland','Wales','Northern Ireland']
-        check[yr] = tempcheck
-        check['pop'] = df(temppop, columns = years, index = label)
-    return check
 
 
 def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict):
@@ -675,69 +586,3 @@ def makeregionresultscc(S,U,Y,newY,Yregion,pop_region,oa_pop,name,meta,stressor,
     
 
     return defra_foot
-
-
-def regioncheck(defra_ghg_north_east,defra_ghg_north_west,defra_ghg_yorkshire_and_the_humber,defra_ghg_east_midlands,defra_ghg_west_midlands,defra_ghg_east,defra_ghg_london,defra_ghg_south_east,defra_ghg_south_west,defra_ghg_scotland,defra_ghg_wales,defra_ghg_northern_ireland,years):
-    check={}
-    for yr in years:
-        tempcheck =  np.zeros((12,39))
-        tempcheck[0,:] = np.sum(defra_ghg_north_east[str(yr)+'_prd']).values
-        tempcheck[1,:] = np.sum(defra_ghg_north_west[str(yr)+'_prd']).values
-        tempcheck[2,:] = np.sum(defra_ghg_yorkshire_and_the_humber[str(yr)+'_prd']).values
-        tempcheck[3,:] = np.sum(defra_ghg_east_midlands[str(yr)+'_prd']).values
-        tempcheck[4,:] = np.sum(defra_ghg_west_midlands[str(yr)+'_prd']).values
-        tempcheck[5,:] = np.sum(defra_ghg_east[str(yr)+'_prd']).values
-        tempcheck[6,:] = np.sum(defra_ghg_london[str(yr)+'_prd']).values
-        tempcheck[7,:] = np.sum(defra_ghg_south_east[str(yr)+'_prd']).values
-        tempcheck[8,:] = np.sum(defra_ghg_south_west[str(yr)+'_prd']).values
-        tempcheck[9,:] = np.sum(defra_ghg_scotland[str(yr)+'_prd']).values
-        tempcheck[10,:] = np.sum(defra_ghg_wales[str(yr)+'_prd']).values
-        tempcheck[11,:] = np.sum(defra_ghg_northern_ireland[str(yr)+'_prd']).values
-        tempcheck = df(tempcheck, columns = defra_ghg_north_east[str(yr)+'_prd'].columns, index = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West','Scotland','Wales','Northern Ireland'])
-        
-        tempcheck.loc['North East']['Electricity, gas and other fuels'] = tempcheck.loc['North East']['Electricity, gas and other fuels']+defra_ghg_north_east['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['North West']['Electricity, gas and other fuels'] = tempcheck.loc['North West']['Electricity, gas and other fuels']+defra_ghg_north_west['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['Yorkshire and The Humber']['Electricity, gas and other fuels'] = tempcheck.loc['Yorkshire and The Humber']['Electricity, gas and other fuels']+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['East Midlands']['Electricity, gas and other fuels'] = tempcheck.loc['East Midlands']['Electricity, gas and other fuels']+defra_ghg_east_midlands['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['West Midlands']['Electricity, gas and other fuels'] = tempcheck.loc['West Midlands']['Electricity, gas and other fuels']+defra_ghg_west_midlands['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['East']['Electricity, gas and other fuels'] = tempcheck.loc['East']['Electricity, gas and other fuels']+defra_ghg_east['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['London']['Electricity, gas and other fuels'] = tempcheck.loc['London']['Electricity, gas and other fuels']+defra_ghg_london['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['South East']['Electricity, gas and other fuels'] = tempcheck.loc['South East']['Electricity, gas and other fuels']+defra_ghg_south_east['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['South West']['Electricity, gas and other fuels'] = tempcheck.loc['South West']['Electricity, gas and other fuels']+defra_ghg_south_west['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['Scotland']['Electricity, gas and other fuels'] = tempcheck.loc['Scotland']['Electricity, gas and other fuels']+defra_ghg_scotland['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['Wales']['Electricity, gas and other fuels'] = tempcheck.loc['Wales']['Electricity, gas and other fuels']+defra_ghg_wales['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['Northern Ireland']['Electricity, gas and other fuels'] = tempcheck.loc['Northern Ireland']['Electricity, gas and other fuels']+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure - not travel', yr]
-        
-        tempcheck.loc['North East']['Operation of personal transport equipment'] = tempcheck.loc['North East']['Operation of personal transport equipment']+defra_ghg_north_east['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['North West']['Operation of personal transport equipment'] = tempcheck.loc['North West']['Operation of personal transport equipment']+defra_ghg_north_west['direct'].loc['Consumer expenditure - not travel', yr]
-        tempcheck.loc['Yorkshire and The Humber']['Operation of personal transport equipment'] = tempcheck.loc['Yorkshire and The Humber']['Operation of personal transport equipment']+defra_ghg_yorkshire_and_the_humber['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['East Midlands']['Operation of personal transport equipment'] = tempcheck.loc['East Midlands']['Operation of personal transport equipment']+defra_ghg_east_midlands['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['West Midlands']['Operation of personal transport equipment'] = tempcheck.loc['West Midlands']['Operation of personal transport equipment']+defra_ghg_west_midlands['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['East']['Operation of personal transport equipment'] = tempcheck.loc['East']['Operation of personal transport equipment']+defra_ghg_east['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['London']['Operation of personal transport equipment'] = tempcheck.loc['London']['Operation of personal transport equipment']+defra_ghg_london['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['South East']['Operation of personal transport equipment'] = tempcheck.loc['South East']['Operation of personal transport equipment']+defra_ghg_south_east['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['South West']['Operation of personal transport equipment'] = tempcheck.loc['South West']['Operation of personal transport equipment']+defra_ghg_south_west['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['Scotland']['Operation of personal transport equipment'] = tempcheck.loc['Scotland']['Operation of personal transport equipment']+defra_ghg_scotland['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['Wales']['Operation of personal transport equipment'] = tempcheck.loc['Wales']['Operation of personal transport equipment']+defra_ghg_wales['direct'].loc['Consumer expenditure - travel', yr]
-        tempcheck.loc['Northern Ireland']['Operation of personal transport equipment'] = tempcheck.loc['Northern Ireland']['Operation of personal transport equipment']+defra_ghg_northern_ireland['direct'].loc['Consumer expenditure - travel', yr]
-    
-        check[yr] = tempcheck
-    return check
-
-
-def lacheck(defra_region,region_las,years):
-    check={}
-    temppop =  np.zeros((len(region_las),len(years)))
-    for j, yr in enumerate(years):
-        tempcheck =  np.zeros((len(region_las),33))
-        label = []
-        for i, la in enumerate(region_las):
-            tempcheck[i,:] = np.sum(region_las[la][str(yr)+'_prd']).values
-            tempcheck[i,10] = tempcheck[i,10]+region_las[la]['direct'].loc['Consumer expenditure - not travel', yr]        
-            tempcheck[i,20] = tempcheck[i,20]+region_las[la]['direct'].loc['Consumer expenditure - travel', yr]      
-            label.append(la)
-            temppop[i,j] = region_las[la]['population'].loc[la,yr]
-        tempcheck = df(tempcheck, columns = region_las[la][str(yr)+'_prd'].columns, index = label)        
-        check[yr] = tempcheck       
-    check['pop'] = df(temppop, columns = years, index = label)
-    return check

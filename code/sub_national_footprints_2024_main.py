@@ -117,7 +117,7 @@ for reg in reg_england:
     defra_ghg_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
                                                            'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg)
 
-file = os.path.join(census_filepath, 'laregionlookup2021.xls')   
+file = os.path.join(census_filepath, 'laregionlookup2022.xls')   
 LAcodesnames = pd.read_excel(file, header = 4, index_col=0)
 oac01_names = pd.read_excel(os.path.join(census_filepath, 'oac2001.xlsx'), sheet_name=None, index_col = 0)
 oac11_names = pd.read_excel(os.path.join(census_filepath, 'oac2011.xlsx'), sheet_name=None, index_col = 0)
@@ -140,7 +140,7 @@ for reg in list(ghg_reg_las.keys()):
 
 # region_results_check = eval(formula)
 
-region_results_check = defra.regioncheck2023(defra_ghg_reg,years)
+region_results_check = defra.regioncheck(defra_ghg_reg,years)
 
 defrawriter = os.path.join(results_filepath, 'Region Mastersheet.xlsx')
 writer = pd.ExcelWriter(defrawriter)
@@ -152,7 +152,7 @@ writer.save()
 
 la_results_check = {}
 for reg in reg_england + ['Scotland', 'Wales']:
-    la_results_check[reg] = defra.lacheck2023(defra_ghg_reg[reg],ghg_reg_las[reg],years)
+    la_results_check[reg] = defra.lacheck(defra_ghg_reg[reg],ghg_reg_las[reg],years)
     
     
 for reg in reg_england + ['Scotland', 'Wales']:
