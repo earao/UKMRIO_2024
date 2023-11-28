@@ -32,6 +32,13 @@ def make_21_lookup(census_filepath,s11):
     
     oa_lookup21.set_index(['OA21CD'],inplace=True)
     
+    file = os.path.join(census_filepath, 'LA2020to2022.xlsx')  
+    newLA = pd.read_excel(file, index_col=0)
+    
+    oa_lookup21 = oa_lookup21.merge(newLA,left_on='LAD',right_index = True)
+    oa_lookup21 = oa_lookup21.drop(['la_name_20', 'LAD', 'LAD_nm'], axis=1)
+    oa_lookup21 = oa_lookup21.rename(index=str, columns={"la_name_22": "LAD_nm", "la_code_22": "LAD" })
+   
     return oa_lookup21
 
 
@@ -44,6 +51,13 @@ def make_11_lookup(census_filepath):
         
     s11 = oa_lookup11[oa_lookup11['REG']=='Scotland']
     s11.reset_index(inplace=True)
+    
+    file = os.path.join(census_filepath, 'LA2020to2022.xlsx')  
+    newLA = pd.read_excel(file, index_col=0)
+    
+    oa_lookup11 = oa_lookup11.merge(newLA,left_on='LAD',right_index = True)
+    oa_lookup11 = oa_lookup11.drop(['la_name_20', 'LAD', 'LAD_nm'], axis=1)
+    oa_lookup11 = oa_lookup11.rename(index=str, columns={"la_name_22": "LAD_nm", "la_code_22": "LAD" })
     
     return (oa_lookup11,s11)
   
@@ -68,8 +82,17 @@ def make_01_lookup(census_filepath):
     s01['REG'] = 'Scotland'
     s01=s01.drop(['council_area'], axis=1)
     s01=s01.rename(index=str, columns={"data_zone": "LSOA", "inter_zone": "MSOA", "Council Area NAME": "LAD_nm",'council_area': 'LAD', })
-        
+     
+    
     oa_lookup01 = pd.concat([ew01,s01])
+    
+    file = os.path.join(census_filepath, 'LA2020to2022.xlsx')  
+    newLA = pd.read_excel(file, index_col=0)
+    
+    oa_lookup01 = oa_lookup01.merge(newLA,left_on='LAD',right_index = True)
+    oa_lookup01 = oa_lookup01.drop(['la_name_20', 'LAD', 'LAD_nm'], axis=1)
+    oa_lookup01 = oa_lookup01.rename(index=str, columns={"la_name_22": "LAD_nm", "la_code_22": "LAD" })
+    
     
     return oa_lookup01
 

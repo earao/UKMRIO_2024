@@ -78,10 +78,9 @@ regions = ['North East','North West','Yorkshire and The Humber','East Midlands',
 regions_lc = ['north_east','north_west','yorkshire','east_midlands','west_midlands','east','london','south_east','south_west','scotland','wales']
 region_dict = dict(zip(regions_lc, list(range(1,13))))
 
-
+oa_lookup01 = cs.make_01_lookup(census_filepath) 
 (oa_lookup11,s11) = cs.make_11_lookup(census_filepath) 
 oa_lookup21 = cs.make_21_lookup(census_filepath,s11)
-oa_lookup01 = cs.make_01_lookup(census_filepath) 
 
 regoacsyr = lcf.make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census_filepath,regions) # save?
 pickle.dump(regoacsyr, open(results_filepath + "regoacsyr.p", "wb" ))
