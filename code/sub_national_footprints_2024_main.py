@@ -15,7 +15,6 @@ df = pd.DataFrame
 import LCF_functions as lcf
 import pickle
 import defra_functions as defra
-import ukmrio_functions as uk
 import census_functions as cs
 import copy
 from sys import platform
