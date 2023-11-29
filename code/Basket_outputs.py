@@ -95,22 +95,92 @@ for year in range(cpi.columns.min(), 2022):
 # Basket data (not used here, does not contain all items): https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
 # Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
-years = list(range(2018, 2022))
+years = list(range(2010, 2022))
+
 # import item prices
-prices = pd.read_csv(data_filepath + 'processed/average_prices.csv')
-
-
-
+prices_dir = data_filepath + 'processed/Basket_data/Prices/'
+files = os.listdir(prices_dir)
+prices = pd.DataFrame()
+for file in files:
+    prices = prices.append(pd.read_csv(prices_dir + file).fillna(0));
 
 # import item weights
 weight_dir = data_filepath + 'raw/Basket_data/Weights/'
 files = os.listdir(weight_dir)
 weights = pd.DataFrame()
 for file in files:
-    weights = weights.append(pd.read_csv(weights_dir + file));
-    print(file);
+    for year in years:
+        if str(year) in file:
+            temp = pd.read_csv(weight_dir + file)
+            temp.columns = [x.upper().replace(' ', '') for x in temp.columns]
+            weights = weights.append(temp);
+weights = weights.drop(['IMPUTATION_FLAG', 'IMPUTATION_FLAGS'], axis=1).dropna(how='all', axis=0).dropna(how='all', axis=1)
+
+# make dictionaries
+prices_dict = {}; check_p = pd.DataFrame(index=[1], columns=[1])
+for date in prices[['QUOTE_DATE']].drop_duplicates()['QUOTE_DATE']:
+    prices_dict[date] = prices.loc[prices['QUOTE_DATE'] == date]
+    temp = prices_dict[date].set_index('ITEM_ID')
+    temp[date] = 1
+    check_p = check_p.join(temp[[date]], how='outer')
+check_p = check_p.drop(1, axis=0).drop(1, axis=1)
+check_p.index = [str(x).split('.')[0] for x in check_p.index]
+check_p.columns = [str(x).split('.')[0] for x in check_p.columns]
+    
+weights_dict = {}; check_w = pd.DataFrame(index=[1], columns=[1])
+for date in weights[['INDEX_DATE']].drop_duplicates()['INDEX_DATE']:
+    weights_dict[date] = weights.loc[weights['INDEX_DATE'] == date]
+    temp = weights_dict[date]
+    temp[date] = 1
+    temp = temp[[date, 'ITEM_ID']].drop_duplicates().set_index(['ITEM_ID'])
+    temp[date] = 1
+    check_w = check_w.join(temp[[date]], how='outer')
+check_w = check_w.drop(1, axis=0).drop(1, axis=1)
+check_w.index = [str(x).split('.')[0] for x in check_w.index]
+check_w.columns = [str(x).split('.')[0] for x in check_w.columns]
+
+check_all = check_p.join(check_w, lsuffix='_p', rsuffix = '_w', how='outer').T
+new_idx = []
+for item in check_all.index:
+    if '_' in item:
+        new_idx.append(item)
+check_all = check_all.loc[new_idx]
+check_all['date'] = [x.split('_')[0] for x in check_all.index.tolist()]
+check_all['data'] = [x.split('_')[1] for x in check_all.index.tolist()]
+check_all = check_all.set_index(['date', 'data']).stack().dropna(how='all').unstack('data')
+check_missing = check_all[check_all.isna().any(axis=1)]
 
 
+
+# match items and weights
+prices['ITEM_ID'] = [str(x).split('.')[0] for x in prices['ITEM_ID']]
+prices['INDEX_DATE'] = [str(x).split('.')[0] for x in prices['QUOTE_DATE']]
+weights['ITEM_ID'] = [str(x).split('.')[0] for x in weights['ITEM_ID']]
+weights['INDEX_DATE'] = [str(x).split('.')[0] for x in weights['INDEX_DATE']]
+
+weights['weight'] = 'weight'
+prices['prices'] = 'prices'
+
+basket = prices.merge(weights, on=['ITEM_ID', 'INDEX_DATE'], how='outer')
+
+aaa = basket[['ITEM_ID', 'INDEX_DATE', 'weight', 'prices', 'ITEM_DESC']].drop_duplicates()
+aaa = aaa[aaa.isna().any(axis=1)]
+
+
+check_date = aaa[['INDEX_DATE', 'weight', 'prices']].drop_duplicates()
+check_date = check_date[check_date.isna().any(axis=1)].fillna('')
+check_date['check'] = check_date['prices'] + check_date['weight']
+check_date['count'] = 1
+check_date = check_date.set_index(['check', 'INDEX_DATE'])[['count']].unstack('check')
+check_date = check_date[check_date.isna().any(axis=1)]
+
+
+check_item = aaa[['ITEM_ID', 'ITEM_DESC', 'weight', 'prices']].drop_duplicates()
+check_item = check_item[check_item.isna().any(axis=1)].fillna('')
+check_item['check'] = check_item['prices'] + check_item['weight']
+check_item['count'] = 1
+check_item = check_item.set_index(['check', 'ITEM_ID', 'ITEM_DESC'])[['count']].unstack('check')
+check_item = check_item[check_item.isna().any(axis=1)]
 
 # import lookup to LCFS
 lookup = pd.read_csv(data_filepath + 'lookups/basket_id_lookup.csv').fillna('')
