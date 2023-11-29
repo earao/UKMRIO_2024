@@ -74,8 +74,8 @@ newY = lcf.make_new_Y_105(Y,yhh_wide,years)
 
 hhspenddata3 = lcf.convert_hhspend_sizes(hhspenddata2,concs_dict,years,'456_to_105')
 
-regions = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West','Scotland','Wales']
-regions_lc = ['north_east','north_west','yorkshire','east_midlands','west_midlands','east','london','south_east','south_west','scotland','wales']
+regions = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West','Wales','Scotland']
+regions_lc = ['north_east','north_west','yorkshire','east_midlands','west_midlands','east','london','south_east','south_west','wales','scotland']
 region_dict = dict(zip(regions_lc, list(range(1,13))))
 
 oa_lookup01 = cs.make_01_lookup(census_filepath) 
@@ -116,8 +116,15 @@ for reg in reg_england:
     reg_lower = reg.replace(' and The Humber', '').replace(' ', '_').lower()
     defra_ghg_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
                                                            'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg)
+    
+defra_ghg_reg['Wales'] = defra.makeregionresults(S,U,Y,newY,y_regional['wales'],meta,ghg,defra_ghg_uk['direct'],
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Wales')
+defra_ghg_reg['Northern Ireland'] = defra.makeregionresults(S,U,Y,newY,y_N_Ireland,meta,ghg,defra_ghg_uk['direct'],
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Northern Ireland')
+defra_ghg_reg['Scotland'] = defra.makeregionresults(S,U,Y,newY,y_regional['scotland'],meta,ghg,defra_ghg_uk['direct'],
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Scotland')
 
-file = os.path.join(census_filepath, 'laregionlookup2022.xls')   
+file = os.path.join(census_filepath, 'laregionlookup2022.xlsx')   
 LAcodesnames = pd.read_excel(file, header = 4, index_col=0)
 oac01_names = pd.read_excel(os.path.join(census_filepath, 'oac2001.xlsx'), sheet_name=None, index_col = 0)
 oac11_names = pd.read_excel(os.path.join(census_filepath, 'oac2011.xlsx'), sheet_name=None, index_col = 0)
