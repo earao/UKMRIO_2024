@@ -31,8 +31,6 @@ def make_Yhh_109_34(Y_d,years,meta):
     
     return total_Yhh_109
 
-
-
 def convert_hhspend_sizes(hhspenddata,concs_dict,years,size_str):
 
     concs_dict[size_str] = concs_dict[size_str].apply(lambda x: pd.to_numeric(x, errors='coerce')).dropna(axis=0, how='all').dropna(axis=1, how='all')
@@ -852,7 +850,7 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
         regoacs[r] = temp
     regoacsyr[yr] = regoacs
       
-  regions2 = ['north-east','north-west','yorkshire-and-the-humber','east-midlands','west-midlands','east','london','south-east','south-west','scotland','wales']
+  regions2 = ['north-east','north-west','yorkshire-and-the-humber','east-midlands','west-midlands','east','london','south-east','south-west','wales','scotland']
   
   file = os.path.join(census_filepath, 'oa2011pop.csv') 
   pop_e = pd.read_csv(file, encoding="iso8859_15", index_col = 0) 
@@ -925,6 +923,9 @@ def make_pop_hhold_by_oac_region_year(oa_lookup01,oa_lookup11,oa_lookup21,census
     regoacsyr[yr] = regoacs
    
   yr = 2021
+  
+  regoacs = {}
+  print(yr)
   
   f = 'OA_(2011)_to_OA_(2021)_to_Local_Authority_District_(2022)_for_England_and_Wales_Lookup_(Version_2).csv'
   file = os.path.join(census_filepath, f)
