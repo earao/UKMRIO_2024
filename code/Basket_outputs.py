@@ -9,7 +9,6 @@ import pandas as pd
 from sys import platform
 import pickle
 import copy as cp
-import calendar
 import os
 
 # set working directory
@@ -95,54 +94,89 @@ for year in range(cpi.columns.min(), 2022):
 # Basket data (not used here, does not contain all items): https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
 # Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
-years = list(range(2018, 2022))
+years = list(range(2010, 2022))
+
 # import item prices
-prices = pd.read_csv(data_filepath + 'processed/average_prices.csv')
-
-
-
+prices_dir = data_filepath + 'processed/Basket_data/Prices/'
+files = os.listdir(prices_dir)
+prices = pd.DataFrame()
+for file in files:
+    prices = prices.append(pd.read_csv(prices_dir + file).fillna(0));
 
 # import item weights
 weight_dir = data_filepath + 'raw/Basket_data/Weights/'
 files = os.listdir(weight_dir)
 weights = pd.DataFrame()
 for file in files:
-    weights = weights.append(pd.read_csv(weights_dir + file));
-    print(file);
+    for year in years:
+        if str(year) in file:
+            temp = pd.read_csv(weight_dir + file)
+            temp.columns = [x.upper().replace(' ', '') for x in temp.columns]
+            weights = weights.append(temp);
+weights = weights.drop(['IMPUTATION_FLAG', 'IMPUTATION_FLAGS'], axis=1).dropna(how='all', axis=0).dropna(how='all', axis=1)
 
+# match items and weights
+prices['ITEM_ID'] = [str(x).split('.')[0] for x in prices['ITEM_ID']]
+prices['INDEX_DATE'] = [str(x).split('.')[0] for x in prices['QUOTE_DATE']]
+# fix missing years for weights
+missing_years = ['201703', '201704', '201705', '201706', '201707', '201708', '201709', '201710']
+prices.loc[prices['INDEX_DATE'].isin(missing_years) == True, 'INDEX_DATE'] = '201711'
 
+weights['ITEM_ID'] = [str(x).split('.')[0] for x in weights['ITEM_ID']]
+weights['INDEX_DATE'] = [str(x).split('.')[0] for x in weights['INDEX_DATE']]
 
-# import lookup to LCFS
-lookup = pd.read_csv(data_filepath + 'lookups/basket_id_lookup.csv').fillna('')
-lookup['Product'] = lookup['ITEM_DESC'] + ' ' + lookup['WEIGHT\SIZE']
-lookup['ITEM_ID'] = [str(x).replace(' ', '') for x in lookup['ITEM_ID']]
+# merge prices and weights
+keep = ['INDEX_DATE', 'ITEM_ID', 'ITEM_DESC', 'QUOTE_DATE', 'PRICE', 'COICOP_WEIGHT', 'ITEM_WEIGHT', 'CPIH_COICOP_WEIGHT', 'ITEM_INDEX']
+basket = prices.merge(weights, on=['ITEM_ID', 'INDEX_DATE'], how='outer').fillna(0)[keep]
+basket['spend'] = basket['PRICE'] * basket['CPIH_COICOP_WEIGHT']
+new_desc = []
+for item in basket['ITEM_DESC']:
+    new = str(item)
+    while new[-1] == ' ':
+        new = new[:-1]
+    new_desc.append(new)
+basket['ITEM_DESC'] = new_desc
 
-# add lookup to weights
-weights['ITEM_ID'] = [str(x).replace(' ', '') for x in weights['ITEM_ID']]
-weights2 = weights.dropna(axis=1, how='all').merge(lookup, on='ITEM_ID', how='left')
+# iport coicop lookup
+lookup = pd.read_csv(data_filepath + 'lookups/basket_to_ccp4.csv')
+lookup['ITEM_ID'] = lookup['ITEM_ID'].astype(str)
 
-wieghts3 = weights2[['order', 'ITEM_ID', 'ITEM_DESC_x', 'ITEM_DESC_y', 'lcfs']].drop_duplicates()
-wieghts3 = wieghts3[wieghts3.isna().any(axis=1)]
+# calculate basket price by coicop
+basket = basket.merge(lookup[['ITEM_ID', 'lcfs']], on='ITEM_ID', how='left')\
+    .groupby(['INDEX_DATE', 'lcfs']).sum()[['spend', 'CPIH_COICOP_WEIGHT']].reset_index()
+#basket['spend'] = basket['spend'] / basket['CPIH_COICOP_WEIGHT']
 
+basket['year'] = [int(x[:4]) for x in basket['INDEX_DATE']]
+basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])    
+   
 # calculate basket emissions
-temp = temp.join(lookup[['Product', 'lcfs', 'order']]).set_index(['lcfs', 'Product'])
-multipliers_all.index.names = ['lcfs']
-basket_price = temp[['order']]
-for year in range(2018, 2022):
-    temp2 = temp[[str(year)]].rename(columns={str(year):'Basket'}).join(multipliers_all[[year]].rename(columns={year:'multiplier'}))
-    temp2[year] = temp2['multiplier'] * temp2['Basket']
-    basket_price = basket_price.join(temp2[[year]])
+temp = pd.DataFrame(multipliers_all.unstack())
+temp.index.names = ['year', 'lcfs']; temp.columns = ['multiplier']
 
-basket_price = basket_price.sort_values('order').drop('order', axis=1).dropna(how='all')
+basket_ghg = basket.join(temp, how='left')
+basket_ghg['ghg'] = basket_ghg['spend'] * basket_ghg['multiplier']
 
-basket_change = pd.DataFrame(index=basket_price.index)
-comp_year = cp.copy(basket_price)
-for year in years[1:]:
-    comp_year.loc[comp_year[2018].isna() == True, 2018] = comp_year[year]
-comp_year = comp_year[2018]
+# get ghg emissions
+basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs']).droplevel(axis=1, level=0).fillna(0)
+order = []
+for item in multipliers_all.index.tolist():
+    if item in basket_ghg.columns:
+        order.append(item)
+        
+basket_ghg = basket_ghg[order]
+basket_ghg['TOTAL'] = basket_ghg.sum(1)
+basket_ghg = basket_ghg.T
 
-for year in years:
-    basket_change[year] = basket_price[year] / comp_year * 100
+# calculate basket_change compared to 2015
+basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201501')] * 100)
+
+# at coicop 1 level
+basket_ghg_ccp1 = cp.copy(basket_ghg)
+basket_ghg_ccp1.index = [x.split('.')[0] for x in basket_ghg_ccp1.index]
+basket_ghg_ccp1 = basket_ghg_ccp1.sum(axis=0, level=0)
+
+# calculate basket_change compared to 2015
+basket_change_ccp1 = basket_ghg_ccp1.apply(lambda x: x / basket_ghg_ccp1[(2015, '201501')] * 100).fillna(0)
 
 ##############
 ## Save All ##

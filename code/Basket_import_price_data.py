@@ -37,7 +37,6 @@ for year in years:
                 price.columns = [x.upper().replace(' ', '') for x in price.columns]  
                 
                 # add date
-                date = '20' + file.split('20')[1].replace('_', '')[:4]
                 price['FILE_DATE'] = date
                 price['FILE'] = file
                
