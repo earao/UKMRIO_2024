@@ -144,7 +144,7 @@ lookup['ITEM_ID'] = lookup['ITEM_ID'].astype(str)
 # calculate basket price by coicop
 basket = basket.merge(lookup[['ITEM_ID', 'lcfs']], on='ITEM_ID', how='left')\
     .groupby(['INDEX_DATE', 'lcfs']).sum()[['spend', 'CPIH_COICOP_WEIGHT']].reset_index()
-#basket['spend'] = basket['spend'] / basket['CPIH_COICOP_WEIGHT']
+basket['spend'] = basket['spend'] / basket['CPIH_COICOP_WEIGHT'] # check method of how CPIH weights are used for CPI
 
 basket['year'] = [int(x[:4]) for x in basket['INDEX_DATE']]
 basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])    
@@ -154,7 +154,7 @@ temp = pd.DataFrame(multipliers_all.unstack())
 temp.index.names = ['year', 'lcfs']; temp.columns = ['multiplier']
 
 basket_ghg = basket.join(temp, how='left')
-basket_ghg['ghg'] = basket_ghg['spend'] * basket_ghg['multiplier']
+basket_ghg['ghg'] = basket_ghg['spend'] * basket_ghg['multiplier'] 
 
 # get ghg emissions
 basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs']).droplevel(axis=1, level=0).fillna(0)
@@ -168,7 +168,7 @@ basket_ghg['TOTAL'] = basket_ghg.sum(1)
 basket_ghg = basket_ghg.T
 
 # calculate basket_change compared to 2015
-basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201501')] * 100)
+basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201504')] * 100)
 
 # at coicop 1 level
 basket_ghg_ccp1 = cp.copy(basket_ghg)
@@ -176,7 +176,19 @@ basket_ghg_ccp1.index = [x.split('.')[0] for x in basket_ghg_ccp1.index]
 basket_ghg_ccp1 = basket_ghg_ccp1.sum(axis=0, level=0)
 
 # calculate basket_change compared to 2015
-basket_change_ccp1 = basket_ghg_ccp1.apply(lambda x: x / basket_ghg_ccp1[(2015, '201501')] * 100).fillna(0)
+basket_change_ccp1 = basket_ghg_ccp1.apply(lambda x: x / basket_ghg_ccp1[(2015, '201504')] * 100)
+
+#########
+## SDA ##
+#########
+
+# use only household emission
+
+# need yhh_wide (deflate)
+# need emission intensities (deflate)
+# population data
+# proportioned spend
+
 
 ##############
 ## Save All ##
