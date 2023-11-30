@@ -14,13 +14,13 @@ df = pd.DataFrame
 # used in ukmrio_main_2024 #
 ############################
 
-def make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath): # used in ukmrio_main_2024
+def make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath,yrs): # used in ukmrio_main_2024
 
     exioWATgrn_cons = {}
     exioWATblu_cons = {}
     exioWATblu_wdrl = {}
-    uk_wat_blu_cons_direct = []
-    uk_wat_blu_wdrl_direct = []
+    uk_wat_blu_cons_direct = df(np.zeros((1,len(yrs))),columns = yrs)
+    uk_wat_blu_wdrl_direct = df(np.zeros((1,len(yrs))),columns = yrs)
        
     exio_i_index = []
     for c in range (0,len(c_conc.index)):
@@ -72,10 +72,23 @@ def make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath): # used i
         tempwat_b_c_hh = hh_stressor.loc['Water Consumption Blue - Domestic', ('GB', 'Final consumption expenditure by households')]
         tempwat_b_w_hh = hh_stressor.loc['Water Withdrawal Blue - Domestic', ('GB', 'Final consumption expenditure by households')]
         
-        uk_wat_blu_cons_direct.append(tempwat_b_c_hh)
-        uk_wat_blu_wdrl_direct.append(tempwat_b_w_hh)
+        uk_wat_blu_cons_direct.iloc[0,a+5] = tempwat_b_c_hh
+        uk_wat_blu_wdrl_direct.iloc[0,a+5] = tempwat_b_w_hh
     
-    uk_wat_blu_cons_direct = df(uk_wat_blu_cons_direct,index = exioyrs)
-    uk_wat_blu_wdrl_direct = df(uk_wat_blu_wdrl_direct,index = exioyrs)
+    watgrn_cons = {}
+    watblu_cons = {}
+    watblu_wdrl = {}
+    
+    for yr in range(1990, 1995):
+        watgrn_cons[yr] = exioWATgrn_cons[1995]
+        watblu_cons[yr] = exioWATblu_cons[1995]
+        watblu_wdrl[yr] = exioWATblu_wdrl[1995]
+        uk_wat_blu_cons_direct[yr] = uk_wat_blu_cons_direct[1995]
+        uk_wat_blu_wdrl_direct[yr] = uk_wat_blu_wdrl_direct[1995]
+           
+    for yr in exioyrs:
+        watgrn_cons[yr] = exioWATgrn_cons[yr]
+        watblu_cons[yr] = exioWATblu_cons[yr]
+        watblu_wdrl[yr] = exioWATblu_wdrl[yr]
         
-    return(exioWATgrn_cons,exioWATblu_cons,exioWATblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct)
+    return(watgrn_cons,watblu_cons,watblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct)
