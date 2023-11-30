@@ -6,7 +6,6 @@ Created on Fri Nov 17 2023
 Calculate emissions for LCFS 2001-2021
 """
 
-import pandas as pd
 import Basket_emissions_functions as estimate_emissions
 from sys import platform
 import pickle
@@ -36,7 +35,7 @@ for year in years:
     hhdspend[year] = lcfs[year].loc[:,'1.1.1.1.1':'12.7.1.1.6'].astype(float) # already multiplied by weight
   
 # calculate emissions
-hhd_ghg, multipliers = estimate_emissions.make_footprint(hhdspend, results_filepath, model_inputs)
+hhd_ghg, multipliers, yhh_wide = estimate_emissions.make_footprint(hhdspend, results_filepath, model_inputs)
 
 # save product names
 idx = hhd_ghg[years[0]].columns.tolist()
@@ -49,3 +48,4 @@ for year in years:
 # save household results
 pickle.dump(hhd_ghg, open(results_filepath + 'GHG_by_hhds.p', 'wb'))
 pickle.dump(multipliers, open(results_filepath + 'GHG_multipliers.p', 'wb'))
+pickle.dump(yhh_wide, open(results_filepath + 'SPEND_yhh.p', 'wb'))

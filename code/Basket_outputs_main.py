@@ -168,23 +168,26 @@ basket_ghg['TOTAL'] = basket_ghg.sum(1)
 basket_ghg = basket_ghg.T
 
 # calculate basket_change compared to 2015
-basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201504')] * 100)
-
-# at coicop 1 level
-basket_ghg_ccp1 = cp.copy(basket_ghg)
-basket_ghg_ccp1.index = [x.split('.')[0] for x in basket_ghg_ccp1.index]
-basket_ghg_ccp1 = basket_ghg_ccp1.sum(axis=0, level=0)
-
-# calculate basket_change compared to 2015
-basket_change_ccp1 = basket_ghg_ccp1.apply(lambda x: x / basket_ghg_ccp1[(2015, '201504')] * 100)
+basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201501')] * 100)
 
 #########
 ## SDA ##
 #########
 
-# use only household emission
+# Population data: https://www.ons.gov.uk/peoplepopulationandcommunity/populationandmigration/populationestimates/datasets/populationestimatesforukenglandandwalesscotlandandnorthernireland
 
-# need yhh_wide (deflate)
+# use only household emission
+# Structure: pop (1x1) * emission intensities, deflated (1xN) * prop spend (Nx1) * total spend, deflated (1x1)
+
+# pop = 
+lcfs = pickle.load(open(outputs_filepath + 'results_2024/hhspenddata.p', 'rb'))
+for year in years:
+    temp = 
+    hhdspend[year] = lcfs[year].loc[:,'1.1.1.1.1':'12.7.1.1.6'].astype(float) # already multiplied by weight
+    
+yhh = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
+
+
 # need emission intensities (deflate)
 # population data
 # proportioned spend

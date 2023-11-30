@@ -314,4 +314,4 @@ def make_footprint(hhdspend, wd, concs_filepath):
         
         print('Emissions calculated for ' + str(year))
     
-    return(Total_ghg, multipliers)
+    return(Total_ghg, multipliers, yhh_wide)
