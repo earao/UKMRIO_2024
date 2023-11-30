@@ -59,7 +59,7 @@ def iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,s
     i_spend_on_e = np.zeros(shape=(26,7987)) 
     spend_on_a = np.zeros(shape=(26,49))    
     spend_on_s = np.zeros(shape=(26,4,49))           
-    for yr in range(1995,2021):
+    for yr in range(1995,2022):
         print(yr)
         filepath = exiobase_filepath + "3.8.2/MRSUT_{}/".format(str(yr))               
         exio_u = pd.read_csv(os.path.join(filepath, 'use.csv'), sep='\t', header = [0,1], index_col = [0,1])
