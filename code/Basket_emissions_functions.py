@@ -18,29 +18,29 @@ df = pd.DataFrame
 # IO functions #
 ################
 
-def make_Z_from_S_U(S,U):
+def make_Z_from_S_U(S, U):
     
-    Z = np.zeros(shape = (np.size(S,0)+np.size(U,0),np.size(S,1)+np.size(U,1)))
+    Z = np.zeros(shape = (np.size(S, 0) + np.size(U, 0), np.size(S, 1) + np.size(U, 1)))
     
-    Z[np.size(S,0):,0:np.size(U,1)] = U
-    Z[0:np.size(S,0),np.size(U,1):] = S
+    Z[np.size(S, 0):, 0:np.size(U, 1)] = U
+    Z[0:np.size(S, 0), np.size(U, 1):] = S
         
     return Z
 
 
-def make_x(Z,Y):
+def make_x(Z, Y):
     
-    x = np.sum(Z,1)+np.sum(Y,1)
+    x = np.sum(Z,1) + np.sum(Y, 1)
     x[x == 0] = 0.000000001
     
     return x
 
 
-def make_L(Z,x):
+def make_L(Z, x):
     
     bigX = np.zeros(shape = (len(Z)))    
-    bigX = np.tile(np.transpose(x),(len(Z),1))
-    A = np.divide(Z,bigX)    
+    bigX = np.tile(np.transpose(x), (len(Z), 1))
+    A = np.divide(Z, bigX)    
     L = np.linalg.inv(np.identity(len(Z))-A)
 
     return L
@@ -49,32 +49,32 @@ def make_L(Z,x):
 # demand functions #
 ####################
 
-def make_Yhh_106(Y_d,years,meta):
+def make_Yhh_106(Y_d, years, meta):
     
     total_Yhh_106 = {}
     col =  Y_d[years[0]].columns[0:36]
     idx =  Y_d[years[0]].index[0:106]
     for yr in years:
-        temp = np.zeros(shape = [106,36])
+        temp = np.zeros(shape = [106, 36])
         
-        for r in range(0,meta['reg']['len']):
-            temp  = temp + Y_d[yr].iloc[r*106:(r+1)*106,0:36].values
+        for r in range(0, meta['reg']['len']):
+            temp  = temp + Y_d[yr].iloc[r*106:(r + 1)*106, 0:36].values
             
         total_Yhh_106[yr] = df(temp, index =idx, columns =col)
     
     return total_Yhh_106
 
 
-def make_Yhh_109_34(Y_d,years,meta):
+def make_Yhh_109_34(Y_d, years, meta):
     
     total_Yhh_109 = {}
     col =  Y_d[years[0]].columns[0:34]
     idx =  Y_d[years[0]].index[0:109]
     for yr in years:
-        temp = np.zeros(shape = [109,34])
+        temp = np.zeros(shape = [109, 34])
         
-        for r in range(0,meta['reg']['len']):
-            temp  = temp + Y_d[yr].iloc[r*109:(r+1)*109,0:34].values
+        for r in range(0, meta['reg']['len']):
+            temp  = temp + Y_d[yr].iloc[r*109:(r + 1)*109, 0:34].values
             
         total_Yhh_109[yr] = df(temp, index =idx, columns =col)
     
@@ -84,32 +84,32 @@ def make_Yhh_109_34(Y_d,years,meta):
 # LCFS functions #
 ##################
 
-def convert43to41(Y,concs_dict,years):
+def convert43to41(Y, concs_dict, years):
     Y2 = {}
     for yr in years:
-      temp = np.dot(Y[yr],concs_dict['C43_to_C41'])
+      temp = np.dot(Y[yr], concs_dict['C43_to_C41'])
       Y2[yr] = df(temp, index = Y[yr].index, columns = concs_dict['C43_to_C41'].columns)
     
     return Y2
 
-def make_totals_2023(hhdspend,years):
+def make_totals_2023(hhdspend, years):
   
   coicop_exp_tot = {}
   
   for yr in years:
-      coicop_exp_tot[yr] = np.sum(hhdspend[yr],0)
+      coicop_exp_tot[yr] = np.sum(hhdspend[yr], 0)
   return coicop_exp_tot
 
-def convert_exp_tot_sizes(coicop_exp_tot,concs_dict,years,size_str):
+def convert_exp_tot_sizes(coicop_exp_tot, concs_dict, years, size_str):
 
   coicop_exp_tot2 = {}
   for yr in years:
-    temp = np.sum(np.dot(np.diag(coicop_exp_tot[yr]),concs_dict[size_str]),0)
+    temp = np.sum(np.dot(np.diag(coicop_exp_tot[yr]), concs_dict[size_str]), 0)
     coicop_exp_tot2[yr] = df(temp, index = concs_dict[size_str].columns)
     
   return coicop_exp_tot2
 
-def make_balanced_totals_2023(coicop_exp_tot2,total_Yhh_112,concs_dict,years):
+def make_balanced_totals_2023(coicop_exp_tot2, total_Yhh_112, concs_dict, years):
   
   coicop_exp_tot3 = {}
   
@@ -117,20 +117,20 @@ def make_balanced_totals_2023(coicop_exp_tot2,total_Yhh_112,concs_dict,years):
     corrector = np.zeros(shape = 105)
     countstart = 0
     countend = 0
-    for numb in range(0,34):
-      conc = concs_dict[str(numb)+'a']
-      countend = np.sum(np.sum(conc))+countstart
-      lcf_subtotal = np.sum(np.dot(np.transpose(coicop_exp_tot2[yr]),conc)) #*52/1000)
-      required_subtotal = np.sum(total_Yhh_112[yr].iloc[:,numb])
+    for numb in range(0, 34):
+      conc = concs_dict[str(numb) + 'a']
+      countend = np.sum(np.sum(conc)) + countstart
+      lcf_subtotal = np.sum(np.dot(np.transpose(coicop_exp_tot2[yr]), conc)) #*52/1000)
+      required_subtotal = np.sum(total_Yhh_112[yr].iloc[:, numb])
       correction_factor = required_subtotal/lcf_subtotal
-      for c in range(countstart,countend):
+      for c in range(countstart, countend):
         corrector[c] = correction_factor
       countstart = countend
-    coicop_exp_tot3[yr] = np.dot(np.transpose(coicop_exp_tot2[yr]),np.diag(corrector))
+    coicop_exp_tot3[yr] = np.dot(np.transpose(coicop_exp_tot2[yr]), np.diag(corrector))
   
   return coicop_exp_tot3
 
-def make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta):
+def make_y_hh_105(Y, coicop_exp_tot3, years, concs_dict, meta):
   
   yhh_wide = {}
   
@@ -140,16 +140,16 @@ def make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta):
     countstart = 0
     countend = 0
     col = []
-    for a in range(0,34):
-      conc = np.tile(concs_dict[str(a)],(meta['reg']['len'],1))
-      countend = np.sum(np.sum(concs_dict[str(a)+'a']))+countstart
-      category_total = np.dot(coicop_exp_tot3[yr],concs_dict[str(a)+'a'])
-      test1 = np.dot(conc,np.diagflat(category_total))
-      test2 = np.tile(np.dot(conc,np.transpose(category_total)),(1,np.size(conc,1)))
+    for a in range(0, 34):
+      conc = np.tile(concs_dict[str(a)], (meta['reg']['len'], 1))
+      countend = np.sum(np.sum(concs_dict[str(a) + 'a'])) + countstart
+      category_total = np.dot(coicop_exp_tot3[yr], concs_dict[str(a) + 'a'])
+      test1 = np.dot(conc, np.diagflat(category_total))
+      test2 = np.tile(np.dot(conc, np.transpose(category_total)), (1, np.size(conc, 1)))
       test3 = test1/test2
       test3 = np.nan_to_num(test3, copy=True)
-      test4 = np.dot(np.diag(Y[yr].iloc[:,a]),test3)
-      temp[:,countstart:countend] = test4
+      test4 = np.dot(np.diag(Y[yr].iloc[:, a]), test3)
+      temp[:, countstart:countend] = test4
       col[countstart:countend] = concs_dict[str(a) + 'a'].columns
       countstart = countend
     yhh_wide[yr] = df(temp, index = Y[yr].index, columns = col)
@@ -157,30 +157,30 @@ def make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta):
   return yhh_wide
 
 
-def make_new_Y_105(Y,yhh_wide,years):
+def make_new_Y_105(Y, yhh_wide, years):
   newY = {}
   col = []
   
   for yr in years:
-    temp = np.zeros(shape=[len(Y[yr]),112])
-    temp[:,0:105] = yhh_wide[yr]
-    temp[:,105:112] = Y[yr].iloc[:,34:41]
+    temp = np.zeros(shape=[len(Y[yr]), 112])
+    temp[:, 0:105] = yhh_wide[yr]
+    temp[:, 105:112] = Y[yr].iloc[:, 34:41]
     col[0:105] = yhh_wide[yr].columns
-    col[105:112] = Y[yr].iloc[:,34:41].columns
+    col[105:112] = Y[yr].iloc[:, 34:41].columns
     newY[yr] = df(temp, index = Y[yr].index, columns = col)
   
   return newY
 
 
-def make_y_hh_prop(Y,total_Yhh_106,meta,years):
+def make_y_hh_prop(Y, total_Yhh_106, meta, years):
     
     yhh_prop = {}
     
     for yr in years:
         temp = np.zeros(shape=(len(Y[yr])))
     
-        for r in range(0,meta['reg']['len']):
-            temp[r*106:(r+1)*106] = np.divide(np.sum(Y[yr].iloc[r*106:(r+1)*106,0:36],1),np.sum(total_Yhh_106[yr],1))
+        for r in range(0, meta['reg']['len']):
+            temp[r*106:(r + 1)*106] = np.divide(np.sum(Y[yr].iloc[r*106:(r + 1)*106, 0:36], 1), np.sum(total_Yhh_106[yr], 1))
             np.nan_to_num(temp, copy = False)
         
         yhh_prop[yr] = temp
@@ -189,22 +189,22 @@ def make_y_hh_prop(Y,total_Yhh_106,meta,years):
     return yhh_prop
 
 
-def make_new_Y(Y,yhh_wide,meta,years):
+def make_new_Y(Y, yhh_wide, meta, years):
     
     newY = {}
     col = []
     
     for yr in years:
-        temp = np.zeros(shape=[len(Y[yr]),314])
-        temp[:,0:307] = yhh_wide[yr]
-        temp[:,307:314] = Y[yr].iloc[:,33:40]
+        temp = np.zeros(shape=[len(Y[yr]), 314])
+        temp[:, 0:307] = yhh_wide[yr]
+        temp[:, 307:314] = Y[yr].iloc[:, 33:40]
         col[0:307] = yhh_wide[yr].columns
-        col[307:314] = Y[yr].iloc[:,33:40].columns
+        col[307:314] = Y[yr].iloc[:, 33:40].columns
         newY[yr] = df(temp, index = Y[yr].index, columns = col)
     
     return newY
 
-def make_ylcf_props(hhdspend,years, concs_dict, size_str):
+def make_ylcf_props(hhdspend, years, concs_dict, size_str):
     
     ylcf_props = {}; ylcfs_total = {}
     
@@ -220,21 +220,21 @@ def make_ylcf_props(hhdspend,years, concs_dict, size_str):
     return ylcf_props, ylcfs_total
 
 
-def makefoot(S,U,Y,stressor,years):
+def makefoot(S, U, Y, stressor, years):
     footbyCOICOP = {}
     for yr in years:
-        temp = np.zeros(shape = np.size(Y[yr],1))
+        temp = np.zeros(shape = np.size(Y[yr], 1))
         Z = make_Z_from_S_U(S[yr], U[yr]) 
-        bigY = np.zeros(shape = [np.size(Y[yr],0)*2,np.size(Y[yr],1)])
-        bigY[np.size(Y[yr],0):np.size(Y[yr],0)*2,0:] = Y[yr]     
-        x = make_x(Z,bigY)
-        L = make_L(Z,x)
-        bigstressor = np.zeros(shape = [np.size(Y[yr],0)*2,1])
-        bigstressor[0:np.size(Y[yr],0),:] = stressor[yr]
-        e = np.sum(bigstressor,1)/x
-        eL = np.dot(e,L)
-        for a in range(np.size(Y[yr],1)):
-            temp[a] = np.dot(eL,bigY[:,a])
+        bigY = np.zeros(shape = [np.size(Y[yr], 0)*2, np.size(Y[yr], 1)])
+        bigY[np.size(Y[yr], 0):np.size(Y[yr], 0)*2, 0:] = Y[yr]     
+        x = make_x(Z, bigY)
+        L = make_L(Z, x)
+        bigstressor = np.zeros(shape = [np.size(Y[yr], 0)*2, 1])
+        bigstressor[0:np.size(Y[yr], 0), :] = stressor[yr]
+        e = np.sum(bigstressor, 1)/x
+        eL = np.dot(e, L)
+        for a in range(np.size(Y[yr], 1)):
+            temp[a] = np.dot(eL, bigY[:, a])
         footbyCOICOP[yr] = temp  
 
     return footbyCOICOP
@@ -293,7 +293,7 @@ def make_footprint(hhdspend, wd, concs_filepath):
     Total_ghg = {}; multipliers = {}
     for year in list(hhdspend.keys()):
         # add index
-        new_index = concs_dict['456_to_105'].columns.tolist() + ukmrio['Y'][year].loc[:,'13 Non-profit instns serving households':].columns.tolist()
+        new_index = concs_dict['456_to_105'].columns.tolist() + ukmrio['Y'][year].loc[:, '13 Non-profit instns serving households':].columns.tolist()
         COICOP_ghg[year] = df(COICOP_ghg[year], index=new_index, columns=['total_ghg'])
         # add direct emissions
         for item in new_index:
