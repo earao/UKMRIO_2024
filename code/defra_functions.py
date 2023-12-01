@@ -78,9 +78,9 @@ def makeukresults(wd, S,U,Y,newY,coicop_exp_tot2,meta,stressor,direct,indicator,
         if indicator == 'nrg':
             drct[:,i] = direct.loc[:,yr]
         if indicator == 'blc':
-            drct[:,i] = direct.loc[yr,:]
+            drct[:,i] = direct.loc[:,yr]
         if indicator == 'blw':
-            drct[:,i] = direct.loc[yr,:]
+            drct[:,i] = direct.loc[:,yr]
         
         defra_foot[str(yr)+'_sic'] = df(ccc, index = meta['sectors']['ind'], columns = meta['sectors']['prd'])
         defra_foot[str(yr)+'_reg'] = df(reg, index = meta['reg']['idx'], columns = Y[yr].columns[0:np.size(Y[yr],1)-1])
