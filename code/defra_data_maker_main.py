@@ -114,27 +114,6 @@ v = uk.make_v(U_d, Y_d, allyears, meta)
 
 emptydirect = df(np.zeros((1, len(allyears))), index = ['direct'], columns = allyears)
 
-uk_watbluc_direct = np.transpose(uk_watbluc_direct)
-uk_watbluw_direct = np.transpose(uk_watbluw_direct)
-
-temp = np.zeros((1, 32))
-temp[:, 0] = uk_watbluc_direct.iloc[:, 0]
-temp[:, 1] = uk_watbluc_direct.iloc[:, 0]
-temp[:, 2] = uk_watbluc_direct.iloc[:, 0]
-temp[:, 3] = uk_watbluc_direct.iloc[:, 0]
-temp[:, 4] = uk_watbluc_direct.iloc[:, 0]
-temp[:, 5:32] = uk_watbluc_direct.iloc[:, 0:27]
-uk_watbluc_direct2 = df(temp, columns = allyears)
-
-temp = np.zeros((1, 32))
-temp[:, 0] = uk_watbluw_direct.iloc[:, 0]
-temp[:, 1] = uk_watbluw_direct.iloc[:, 0]
-temp[:, 2] = uk_watbluw_direct.iloc[:, 0]
-temp[:, 3] = uk_watbluw_direct.iloc[:, 0]
-temp[:, 4] = uk_watbluw_direct.iloc[:, 0]
-temp[:, 5:32] = uk_watbluw_direct.iloc[:, 0:27]
-uk_watbluw_direct2 = df(temp, columns = allyears)
-
 y_regional = {}
 for region in regions_lc:
     y_regional[region] = lcf.make_y_regional(region, region_dict, y_regions, years)
@@ -150,8 +129,8 @@ defra_bio_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, bio,
 defra_ore_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, ore, emptydirect, 'ore', allyears, years)
 defra_ffl_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, ffl, emptydirect, 'ffl', allyears, years)
 defra_nmm_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, nmm, emptydirect, 'nmm', allyears, years)
-defra_blc_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, watblu_cons, uk_watbluc_direct2, 'blc', allyears, years)
-defra_blw_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, watblu_wdrl, uk_watbluw_direct2, 'blw', allyears, years)
+defra_blc_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, watblu_cons, uk_watbluc_direct, 'blc', allyears, years)
+defra_blw_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, watblu_wdrl, uk_watbluw_direct, 'blw', allyears, years)
 defra_grc_uk = defra.makeukresults(wd,S, U, Y, newY, coicop_exp_tot2, meta, watgrn_cons, emptydirect, 'grc', allyears, years)
 defra_gva_uk = defra.makeukresults(wd,S_d, U_d, Y_d, newY_d, coicop_exp_tot2, meta, v, emptydirect, 'gva', allyears, years)
 
