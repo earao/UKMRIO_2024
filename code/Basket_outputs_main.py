@@ -146,7 +146,7 @@ total_spend = bof.make_total(spend, years, idx_dict)
 # get toal emissions per year per product
 temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
         for year in years}
-total_co2 = bof.make_total(hhd_ghg, years, idx_dict)
+total_co2 = bof.make_total(temp, years, idx_dict)
 
 # proportional spend          
 prop_spend = total_spend.apply(lambda x: x/x.sum())
@@ -158,7 +158,7 @@ for year in years:
 defl_tot_spend = defl_spend.sum(axis=0)
 
 # deflated emission 
-defl_co2 = pd.DataFrame(total_co2 / (defl_spend + 0.001)).astype(float)
+defl_co2 = (total_co2 / (defl_spend + 0.001)).astype(float)
 defl_co2 = defl_co2.loc[multipliers_all.index]
 
 # population
@@ -173,9 +173,9 @@ for year in years:
     # pop (1x1)
     temp['population'] = np.array(population.loc[year, 'population'])
     # emission intensities, deflated (1x105)
-    temp['ghg_deflated'] = np.array(defl_co2.loc[:, year:year].T)
+    temp['ghg_deflated'] = np.array(defl_co2.loc[:, year:year].T.fillna(0))
     # prop spend from yhh (105x1)
-    temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year])
+    temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year].fillna(0))
     # total spend from yhh, deflated (1x1)
     temp['total_spend_deflated'] = np.array(defl_tot_spend[year])
     
@@ -195,10 +195,11 @@ for year in years:
 # Run Analysis   
 sda = {}
 base_year = 2001
-sda_years = cp.copy(years); sda_years.remove(base_year)
 for year in years:
-    sda[year] = bof.sda(sda_vars[year], sda_vars[base_year])
+    sda_0, sda_1 = sda_vars[base_year], sda_vars[year]
+    sda[year] = bof.sda(sda_0, sda_1)
     sda[year].columns = ['total'] + sda_order
+   
 
 ##############
 ## Save All ##
@@ -207,4 +208,8 @@ for year in years:
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
-sda.to_csv(outputs_filepath + 'basket_2024/SDA.csv')
+
+writer = pd.ExcelWriter(outputs_filepath + 'basket_2024/SDA.xlsx')
+for year in sda.keys():
+    sda[year].fillna(0).to_excel(writer, sheet_name=str(year))
+writer.save()

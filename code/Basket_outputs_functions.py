@@ -95,8 +95,9 @@ def sda(sda_0,sda_1):
             
             tempresults = 1
             
-            for c in range(0,terms):                
-               tempresults = np.dot(tempresults,temp[c])
+            for c in range(terms):                
+               tempresults = np.dot(tempresults, temp[c])
+               print(tempresults)
             
             result[b,a+1] = tempresults
                          
