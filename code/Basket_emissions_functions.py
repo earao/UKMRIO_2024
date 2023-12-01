@@ -261,7 +261,7 @@ def make_footprint(hhdspend, wd, concs_filepath):
 
     # load and clean up concs to make it usable
     # these translate IO data sectors to LCFS products/services
-    concs_dict = pd.read_excel(concs_filepath + 'ONS_to_COICOP_LCF_concs.xlsx', sheet_name=None, index_col=0)
+    concs_dict = pd.read_excel(concs_filepath + 'ONS_to_COICOP_LCF_concs_2024.xlsx', sheet_name=None, index_col=0)
 
 #######################
 # aggregate emissions #

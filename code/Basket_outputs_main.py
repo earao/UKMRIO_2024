@@ -15,8 +15,8 @@ import pandas as pd
 from sys import platform
 import pickle
 import copy as cp
-import os
-import io_functions as io
+import numpy as np
+import Basket_outputs_functions as bof
 
 # set working directory
 # make different path depending on operating system
@@ -56,27 +56,7 @@ idx_dict = dict(zip([x.split(' ')[0] for x in multipliers_all.index], multiplier
 ## import CPI, which is needed for SDA and CM analysis
 # CPI data: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceinflation
 # import CPI data
-cpi = {}
-cpi['2008-2022'] = pd.read_excel(data_filepath + 'raw/CPI/202311_consumerpriceinflationdetailedreferencetables.xlsx', sheet_name='Table 9', index_col=2, header=5)\
-    .drop(['Unnamed: 0', 'Unnamed: 1'], axis=1).dropna(how='all')
-    
-cpi['2001-2007'] = pd.read_excel(data_filepath + 'raw/CPI/202311_consumerpriceinflationdetailedreferencetables_tcm77-4192423.xls', sheet_name='Table 9', index_col=2, header=5)\
-    .drop(['Unnamed: 0', 'Unnamed: 1'], axis=1).dropna(how='all')
-
-lookup = pd.read_csv(data_filepath + 'lookups/cpi_to_lcfs.csv').set_index('CPI')
-
-for item in list(cpi.keys()):
-    # macth lcfs columns
-    cpi[item] = cpi[item].join(lookup, how='right').set_index('LCFS').mean(axis=0, level=0).fillna(0)
-    # change to 2010 as base year
-    cpi_comp = cpi[item][2010]
-    cpi[item] = cpi[item].apply(lambda x: x / cpi_comp * 100)
-cpi = cpi['2001-2007'].loc[:, :2007].join(cpi['2008-2022']).fillna(0)
-cpi.index = [x.split(' ')[0] for x in cpi.index]
-cpi = cpi.rename(index=idx_dict)
-
-
-cpi.index = multipliers_all.index
+cpi = bof.import_cpi(data_filepath, idx_dict)
 
 ###########################
 ## Equivalised Household ##
@@ -120,16 +100,22 @@ for year in range(cpi.columns.min(), 2022):
 
 # import basket data
 basket = pd.read_csv(data_filepath + 'processed/Basket_data/Basket_spends.csv')
-   
+basket['lcfs'] = [x.split(' ')[0] for x in basket['lcfs']]
+basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])   
+
+basket_test = basket[['spend']].unstack(level='lcfs').T.mean(axis=1, level=0)
+
 # calculate basket emissions
 temp = pd.DataFrame(multipliers_all.unstack())
-temp.index.names = ['year', 'lcfs']; temp.columns = ['multiplier']
+temp['lcfs'] = [x[1].split(' ')[0] for x in temp.index.tolist()]
+temp.index.names = ['year', 'full_label']
+temp = temp.set_index('lcfs', append=True); temp.columns = ['multiplier']
 
 basket_ghg = basket.join(temp, how='left')
 basket_ghg['ghg'] = basket_ghg['spend'] * basket_ghg['multiplier'] 
 
 # get ghg emissions
-basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs']).droplevel(axis=1, level=0).fillna(0)
+basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs', 'full_label']).droplevel(axis=1, level=[0, 1]).fillna(0)
 order = []
 for item in multipliers_all.index.tolist():
     if item in basket_ghg.columns:
@@ -140,7 +126,7 @@ basket_ghg['TOTAL'] = basket_ghg.sum(1)
 basket_ghg = basket_ghg.T
 
 # calculate basket_change compared to 2015
-basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, '201501')] * 100)
+basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, 201501)] * 100)
 
 #########
 ## SDA ##
@@ -155,27 +141,12 @@ years = list(hhd_ghg.keys())
 
 # get total spend to make other data (from yhh)
 spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
-
 # get toal spend per year by product
-total_spend = pd.DataFrame()
-for year in years:
-    temp = pd.DataFrame(spend[year].sum(axis=0)).T
-    temp['year'] = year
-    total_spend = total_spend.append(temp)
-total_spend = total_spend.set_index('year').T.fillna(0)
-total_spend.index = [x.split(' ')[0] for x in total_spend.index]
-total_spend = total_spend.rename(index=idx_dict)
-
+total_spend = bof.make_total(spend, years, idx_dict)
 # get toal emissions per year per product
-total_co2 = pd.DataFrame()
-for year in years:
-    temp = pd.DataFrame(hhd_ghg[year].apply(lambda x: x*hhd_ghg[year]['no_people']).sum(0).loc[multipliers_all.index]).T
-    temp['year'] = year
-    total_co2 = total_co2.append(temp)
-total_co2 = total_co2.set_index('year').T
-total_co2.index = [x.split(' ')[0] for x in total_co2.index]
-total_co2 = total_co2.rename(index=idx_dict)
-
+temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
+        for year in years}
+total_co2 = bof.make_total(hhd_ghg, years, idx_dict)
 
 # proportional spend          
 prop_spend = total_spend.apply(lambda x: x/x.sum())
@@ -187,7 +158,7 @@ for year in years:
 defl_tot_spend = defl_spend.sum(axis=0)
 
 # deflated emission 
-defl_co2 = pd.DataFrame(total_co2 / defl_spend).astype(float)
+defl_co2 = pd.DataFrame(total_co2 / (defl_spend + 0.001)).astype(float)
 defl_co2 = defl_co2.loc[multipliers_all.index]
 
 # population
@@ -195,74 +166,39 @@ population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', ind
 population.columns = ['population']
 
 # make SDA variables
-
 sda_vars = {}
-
-for year in years[1:]:
-    
+footprint = {}
+for year in years:
+    temp = {}
     # pop (1x1)
-    pop_0 = population.loc[2001, 'population']
-    pop_1 = population.loc[year, 'population']
-    
+    temp['population'] = np.array(population.loc[year, 'population'])
     # emission intensities, deflated (1x105)
-    ghg_0 = defl_co2.loc[:, 2001]
-    ghg_1 = defl_co2.loc[:, year]
-    
+    temp['ghg_deflated'] = np.array(defl_co2.loc[:, year:year].T)
     # prop spend from yhh (105x1)
-    
-    
+    temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year])
     # total spend from yhh, deflated (1x1)
+    temp['total_spend_deflated'] = np.array(defl_tot_spend[year])
     
+    sda_order = list(temp.keys())
+    
+    # emissions
+    foot = cp.copy(temp[sda_order[0]])
+    for item in sda_order[1:]:
+        foot = np.dot(foot, temp[item])
+    footprint[year] = foot[0][0]
+    
+    # format to match function
+    sda_vars[year] = {}
+    for i in range(len(sda_order)):
+        sda_vars[year][i] = temp[sda_order[i]]
 
-for year in range(2002,2021):
-    
-    ghg_0 = np.transpose(df(ghg_mults_deflated.loc[:,2001].values))
-    ghg_1 = np.transpose(df(ghg_mults_deflated.loc[:,year].values))
-    
-    prp_0 = df(np.transpose(prop_spend_gen[2001]).values)
-    prp_1 = df(np.transpose(prop_spend_gen[year]).values)
-    
-    exp_0 = df(np.diag(per_cap_spend.loc[:,2001]))
-    exp_1 = df(np.diag(per_cap_spend.loc[:,year]))
-       
-    popp_0 = df(np.diag(pop_prop.loc[:,2001]))
-    popp_1 = df(np.diag(pop_prop.loc[:,year]))
-    
-    tpop_0 = df(np.tile(total_pop.loc[:,2001],(4,1)))
-    tpop_1 = df(np.tile(total_pop.loc[:,year],(4,1)))
-
-
-    foot_0 = df.dot(ghg_0,prp_0)
-    foot_0 = df.dot(foot_0,exp_0)
-    foot_0 = df.dot(foot_0,popp_0)
-    foot_0 = df.dot(foot_0,tpop_0)
-    
-    foot_1 = df.dot(ghg_1,prp_1)
-    foot_1 = df.dot(foot_1,exp_1)
-    foot_1 = df.dot(foot_1,popp_1)
-    foot_1 = df.dot(foot_1,tpop_1)
-
-    sda_0 = {}
-    sda_0[0] = ghg_0
-    sda_0[1] = prp_0
-    sda_0[2] = exp_0
-    sda_0[3] = popp_0
-    sda_0[4] = tpop_0
-    
-    sda_1 = {}
-    sda_1[0] = ghg_1
-    sda_1[1] = prp_1
-    sda_1[2] = exp_1
-    sda_1[3] = popp_1
-    sda_1[4] = tpop_1
-    
-    sda2[year] = io.sda(sda_1,sda_0)
-
-
-# need emission intensities (deflate)
-# population data
-# proportioned spend
-
+# Run Analysis   
+sda = {}
+base_year = 2001
+sda_years = cp.copy(years); sda_years.remove(base_year)
+for year in years:
+    sda[year] = bof.sda(sda_vars[year], sda_vars[base_year])
+    sda[year].columns = ['total'] + sda_order
 
 ##############
 ## Save All ##
@@ -271,3 +207,4 @@ for year in range(2002,2021):
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
+sda.to_csv(outputs_filepath + 'basket_2024/SDA.csv')

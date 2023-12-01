@@ -8,7 +8,6 @@ Created on Thu Nov 23 10:09:45 2023
 # Basket data (not used here, does not contain all items): https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
 # Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
-
 import pandas as pd
 from sys import platform
 import os
@@ -57,7 +56,7 @@ weights['INDEX_DATE'] = [str(x).split('.')[0] for x in weights['INDEX_DATE']]
 
 # merge prices and weights
 keep = ['INDEX_DATE', 'ITEM_ID', 'ITEM_DESC', 'QUOTE_DATE', 'PRICE', 'COICOP_WEIGHT', 'ITEM_WEIGHT', 'CPIH_COICOP_WEIGHT', 'ITEM_INDEX']
-basket = prices.merge(weights, on=['ITEM_ID', 'INDEX_DATE'], how='outer').fillna(0)[keep]
+basket = prices.merge(weights, on=['ITEM_ID', 'INDEX_DATE'], how='left').fillna(1)[keep]
 basket['spend'] = basket['PRICE'] * basket['CPIH_COICOP_WEIGHT']
 new_desc = []
 for item in basket['ITEM_DESC']:
