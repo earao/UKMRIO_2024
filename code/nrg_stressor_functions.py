@@ -56,10 +56,10 @@ def iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,s
          
     road_prop = pd.read_excel(os.path.join(inputs_filepath,'Transport energy split 0816.xlsx'), sheet_name = 'for use', index_col = 0, header = 0)
       
-    i_spend_on_e = np.zeros(shape=(26,7987)) 
-    spend_on_a = np.zeros(shape=(26,49))    
-    spend_on_s = np.zeros(shape=(26,4,49))           
-    for yr in range(1995,2021):
+    i_spend_on_e = np.zeros(shape=(27,7987)) 
+    spend_on_a = np.zeros(shape=(27,49))    
+    spend_on_s = np.zeros(shape=(27,4,49))           
+    for yr in range(1995,2022):
         print(yr)
         filepath = exiobase_filepath + "3.8.2/MRSUT_{}/".format(str(yr))               
         exio_u = pd.read_csv(os.path.join(filepath, 'use.csv'), sep='\t', header = [0,1], index_col = [0,1])

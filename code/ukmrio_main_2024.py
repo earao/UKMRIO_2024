@@ -123,20 +123,13 @@ uk_foot = {}
 uk_foot['ghg'] = uk.footprint(ghg,U,S,Y,yrs,meta)
 
 #make water stressors
-(WATgrn_cons,WATblu_cons,WATblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct) = water.make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath)
-for yr in range(1990, 1996):
-    WATgrn_cons[yr] = WATgrn_cons[1996]
-    WATblu_cons[yr] = WATblu_cons[1996]
-    WATblu_wdrl[yr] = WATblu_wdrl[1996]
-
-    uk_wat_blu_cons_direct.loc[yr] = uk_wat_blu_cons_direct.loc[1996]
-    uk_wat_blu_wdrl_direct.loc[yr] = uk_wat_blu_wdrl_direct.loc[1996]
+(watgrn_cons,watblu_cons,watblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct) = water.make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath)
 
 #make energy stressor
 (iea_fe_data,aviation,shipping) = energy.make_IEA_data(iea_filepath)
 fullexioNRG = energy.iea_to_full_exio382(inputs_filepath,exiobase_filepath,iea_fe_data,aviation,shipping)
 exioNRG = energy.uk_exio_nrg(fullexioNRG,use,yrs,meta,c_conc,i_conc) 
-uk_nrg_direct = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2024.xlsx'), sheet_name = 'direct')
+uk_nrg_direct = pd.read_excel(os.path.join(uk_energy_filepath,'UKenergy2024.xlsx'), sheet_name = 'direct', index_col=0)
 nrg = energy.make_nrg(uk_energy_filepath,exioNRG,S,yrs,meta)
        
 #make material stressors
@@ -147,7 +140,7 @@ uk_MAT_sectors = mat.make_uk_stressor(ons_filepath,yrs)
 
 # calculate footprints
 uk_foot = {}
-for item in ['ghg', 'co2', 'nrg', 'mat', 'bio', 'ore', 'nmm', 'ffl', 'WATblu_cons', 'WATblu_wdrl', 'WATgrn_cons']:
+for item in ['ghg', 'co2', 'nrg', 'mat', 'bio', 'ore', 'nmm', 'ffl', 'watblu_cons', 'watblu_wdrl', 'watgrn_cons']:
     uk_foot[item] = uk.footprint(eval(item), U, S, Y, yrs, meta)
 
 #stressor data done
