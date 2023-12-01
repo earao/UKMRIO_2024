@@ -29,7 +29,7 @@ lcf_filepath = wd + 'data/raw/LCFS/'
 # import LCFS data
 years = list(range(2001,2022))
 
-coicop_file = data_filepath + 'processed/LCFS/LCF_20231117.csv'
+coicop_file = data_filepath + 'processed/LCFS/LCF_20231201.csv'
 coicop_lookup = pd.read_csv(coicop_file, header = 0).fillna(0)
 
 hhspenddata = {}
