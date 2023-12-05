@@ -56,7 +56,8 @@ idx_dict = dict(zip([x.split(' ')[0] for x in multipliers_all.index], multiplier
 ## import CPI, which is needed for SDA and CM analysis
 # CPI data: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceinflation
 # import CPI data
-cpi = bof.import_cpi(data_filepath, idx_dict)
+cpi_base_year = 2010
+cpi = bof.import_cpi(data_filepath, idx_dict, cpi_base_year)
 
 ###########################
 ## Equivalised Household ##
@@ -86,14 +87,14 @@ equ_hhd = equ_hhd.set_index('year')
 
 years = list(hhd_ghg.keys())
 
-# calculate index
+# calculate index at ccp3
 cm_index = pd.DataFrame(index = cpi.index)
 for year in range(cpi.columns.min(), 2022):
     temp = cpi[[year]]
     temp['multiplier'] = multipliers_all[year]
     temp[year] = temp[year] * temp['multiplier']
     cm_index = cm_index.join(temp[[year]])
-
+    
 #####################
 ## Basket of goods ##
 #####################
@@ -138,11 +139,18 @@ basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, 201501)] * 100)
 # Structure: pop (1x1) * emission intensities, deflated (1x105) * prop spend from yhh (105x1) * total spend from yhh, deflated (1x1)
 
 years = list(hhd_ghg.keys())
+sda_base_year = 2001
+cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
+
+# population
+population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
+population.columns = ['population']
 
 # get total spend to make other data (from yhh)
 spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
 # get toal spend per year by product
 total_spend = bof.make_total(spend, years, idx_dict)
+total_spend.loc['4.2.1 Imputed rentals of owner occupiers', :] = 0 # had to add this, otherwise it creates a huge mess with proportions, etc.
 # get toal emissions per year per product
 temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
         for year in years}
@@ -154,16 +162,14 @@ prop_spend = total_spend.apply(lambda x: x/x.sum())
 # deflated total spend
 defl_spend = pd.DataFrame(index = total_spend.index)
 for year in years:
-    defl_spend[year] = total_spend[year] * (cpi[year] / 100)
-defl_tot_spend = defl_spend.sum(axis=0)
+    defl_spend[year] = total_spend[year] * (cpi_sda[year] / 100)
+defl_tot_spend = pd.DataFrame(defl_spend.sum(axis=0))
+defl_tot_spend_percapita = defl_tot_spend.join(pd.DataFrame(population))
+defl_tot_spend_percapita = defl_tot_spend_percapita[0] / defl_tot_spend_percapita['population']
 
 # deflated emission 
-defl_co2 = (total_co2 / (defl_spend + 0.001)).astype(float)
+defl_co2 = (total_co2 / (defl_spend + 0.01)).astype(float)
 defl_co2 = defl_co2.loc[multipliers_all.index]
-
-# population
-population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
-population.columns = ['population']
 
 # make SDA variables
 sda_vars = {}
@@ -171,13 +177,13 @@ footprint = {}
 for year in years:
     temp = {}
     # pop (1x1)
-    temp['population'] = np.array(population.loc[year, 'population'])
+    temp['population'] = np.array(population.loc[year, 'population'])# / 1000000 # use to rescale
     # emission intensities, deflated (1x105)
-    temp['ghg_deflated'] = np.array(defl_co2.loc[:, year:year].T.fillna(0))
+    temp['ghg_intensities_deflated'] = np.array(defl_co2.loc[:, year:year].T.fillna(0))
     # prop spend from yhh (105x1)
     temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year].fillna(0))
     # total spend from yhh, deflated (1x1)
-    temp['total_spend_deflated'] = np.array(defl_tot_spend[year])
+    temp['total_spend_deflated_percapita'] = np.array(defl_tot_spend_percapita[year]) #/ 100000 # use to rescale
     
     sda_order = list(temp.keys())
     
@@ -194,10 +200,9 @@ for year in years:
 
 # Run Analysis   
 sda = {}
-base_year = 2001
 for year in years:
-    sda_0, sda_1 = sda_vars[base_year], sda_vars[year]
-    sda[year] = bof.sda(sda_0, sda_1)
+    sda_0, sda_1 = sda_vars[sda_base_year], sda_vars[year]
+    sda[year] = bof.sda(sda_1, sda_0)
     sda[year].columns = ['total'] + sda_order
    
 
@@ -211,5 +216,7 @@ basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv
 
 writer = pd.ExcelWriter(outputs_filepath + 'basket_2024/SDA.xlsx')
 for year in sda.keys():
-    sda[year].fillna(0).to_excel(writer, sheet_name=str(year))
+    sda[year].to_excel(writer, sheet_name=str(year))
 writer.save()
+
+pickle.dump(sda, open(outputs_filepath + 'basket_2024/SDA.p', 'wb' ) )

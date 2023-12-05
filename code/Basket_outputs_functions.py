@@ -21,7 +21,7 @@ def make_total(data, years, idx_dict):
     
     return total_data
 
-def import_cpi(data_filepath, idx_dict):  
+def import_cpi(data_filepath, idx_dict, cpi_base_year):  
     cpi = {}
     cpi['2008-2022'] = pd.read_excel(data_filepath + 'raw/CPI/202311_consumerpriceinflationdetailedreferencetables.xlsx', sheet_name='Table 9', index_col=2, header=5)\
         .drop(['Unnamed: 0', 'Unnamed: 1'], axis=1).dropna(how='all')
@@ -34,8 +34,8 @@ def import_cpi(data_filepath, idx_dict):
     for item in list(cpi.keys()):
         # macth lcfs columns
         cpi[item] = cpi[item].join(lookup, how='right').set_index('LCFS').mean(axis=0, level=0).fillna(0)
-        # change to 2010 as base year
-        cpi_comp = cpi[item][2010]
+        # change base year
+        cpi_comp = cpi[item][cpi_base_year]
         cpi[item] = cpi[item].apply(lambda x: x / cpi_comp * 100)
     cpi = cpi['2001-2007'].loc[:, :2007].join(cpi['2008-2022']).fillna(0)
     cpi.index = [x.split(' ')[0] for x in cpi.index]
@@ -97,7 +97,6 @@ def sda(sda_0,sda_1):
             
             for c in range(terms):                
                tempresults = np.dot(tempresults, temp[c])
-               print(tempresults)
             
             result[b,a+1] = tempresults
                          
