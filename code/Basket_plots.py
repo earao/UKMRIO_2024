@@ -115,17 +115,12 @@ for item in list(ccp1_dict.values()):
     plt.axhline(100, c='k')
     plt.savefig(plots_filepath + 'Basket_change_' + item + '.png', dpi=200, bbox_inches='tight')
     plt.show()
-    
+
 # SDA
 sda_mean = sda.set_index('year')['mean'].drop([2020, 2021])
 sda_mean.plot(kind='line');plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_line.png', dpi=200, bbox_inches='tight')
 
-sda_mean.plot(kind='line'); plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); plt.xlim(2007, 2009); plt.ylim(2.5*(10**5), 5*(10**5))
-plt.savefig(plots_filepath + 'SDA_mean_line_2007spendzoom.png', dpi=200, bbox_inches='tight');
-
-sda_mean[['total_spend_deflated_percapita']].plot(kind='bar'); plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
-plt.savefig(plots_filepath + 'SDA_mean_bar_spendzoom.png', dpi=200, bbox_inches='tight');
 
 sda_mean.drop('total', axis=1).plot(kind='bar', stacked=True);plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_bar.png', dpi=200, bbox_inches='tight')

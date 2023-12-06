@@ -141,6 +141,7 @@ basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, 201501)] * 100)
 years = list(hhd_ghg.keys())
 sda_base_year = 2001
 cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
+cpi_sda.loc['4.2.1 Imputed rentals of owner occupiers', :] = cpi_sda.loc['4.1.1 Actual rentals paid by tenants', :]
 
 # population
 population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
@@ -150,26 +151,38 @@ population.columns = ['population']
 spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
 # get toal spend per year by product
 total_spend = bof.make_total(spend, years, idx_dict)
-total_spend.loc['4.2.1 Imputed rentals of owner occupiers', :] = 0 # had to add this, otherwise it creates a huge mess with proportions, etc.
+#total_spend.loc['4.2.1 Imputed rentals of owner occupiers', :] = 0 # had to add this, otherwise it creates a huge mess with proportions, etc.
 # get toal emissions per year per product
 temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
         for year in years}
 total_co2 = bof.make_total(temp, years, idx_dict)
 
-# proportional spend          
-prop_spend = total_spend.apply(lambda x: x/x.sum())
+"""
+# check prop_spend
+
+for year in years:
+    ax = sns.scatterplot(data=prop_spend, x=2001, y=year)
+    x = np.linspace(*ax.get_xlim())
+    ax.plot(x, x)
+    plt.show()
+    
+    
+"""
+
 
 # deflated total spend
 defl_spend = pd.DataFrame(index = total_spend.index)
 for year in years:
-    defl_spend[year] = total_spend[year] * (cpi_sda[year] / 100)
+    defl_spend[year] = total_spend[year] / (cpi_sda[year] / 100)
 defl_tot_spend = pd.DataFrame(defl_spend.sum(axis=0))
 defl_tot_spend_percapita = defl_tot_spend.join(pd.DataFrame(population))
 defl_tot_spend_percapita = defl_tot_spend_percapita[0] / defl_tot_spend_percapita['population']
 
+# proportional spend          
+prop_spend = defl_spend.apply(lambda x: x/x.sum()) # total_spend.apply(lambda x: x/x.sum())
+
 # deflated emission 
-defl_co2 = (total_co2 / (defl_spend + 0.01)).astype(float)
-defl_co2 = defl_co2.loc[multipliers_all.index]
+defl_co2 = (total_co2 / (defl_spend)).astype(float)
 
 # make SDA variables
 sda_vars = {}
