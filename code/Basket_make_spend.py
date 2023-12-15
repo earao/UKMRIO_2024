@@ -8,6 +8,10 @@ Created on Thu Nov 23 10:09:45 2023
 # Basket data (not used here, does not contain all items): https://www.ons.gov.uk/economy/inflationandpriceindices/articles/shoppingpricescomparisontool/2023-05-03
 # Price and weights: https://www.ons.gov.uk/economy/inflationandpriceindices/datasets/consumerpriceindicescpiandretailpricesindexrpiitemindicesandpricequotes
 
+
+# CPI Manual:
+# https://www.ons.gov.uk/economy/inflationandpriceindices/methodologies/consumerpricesindicestechnicalmanual2019#weights
+
 import pandas as pd
 from sys import platform
 import os

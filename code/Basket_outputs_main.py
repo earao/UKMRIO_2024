@@ -58,6 +58,7 @@ idx_dict = dict(zip([x.split(' ')[0] for x in multipliers_all.index], multiplier
 # import CPI data
 cpi_base_year = 2010
 cpi = bof.import_cpi(data_filepath, idx_dict, cpi_base_year)
+cpi.loc['4.2.1 Imputed rentals of owner occupiers', :] = cpi.loc['4.1.1 Actual rentals paid by tenants', :]
 
 ###########################
 ## Equivalised Household ##
@@ -81,20 +82,6 @@ for year in years:
     equ_hhd = equ_hhd.append(pd.DataFrame(temp).T)
 equ_hhd = equ_hhd.set_index('year')   
 
-#############################
-## Carbon multiplier index ##
-#############################
-
-years = list(hhd_ghg.keys())
-
-# calculate index at ccp3
-cm_index = pd.DataFrame(index = cpi.index)
-for year in range(cpi.columns.min(), 2022):
-    temp = cpi[[year]]
-    temp['multiplier'] = multipliers_all[year]
-    temp[year] = temp[year] * temp['multiplier']
-    cm_index = cm_index.join(temp[[year]])
-    
 #####################
 ## Basket of goods ##
 #####################
@@ -141,7 +128,6 @@ basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, 201501)] * 100)
 years = list(hhd_ghg.keys())
 sda_base_year = 2001
 cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
-cpi_sda.loc['4.2.1 Imputed rentals of owner occupiers', :] = cpi_sda.loc['4.1.1 Actual rentals paid by tenants', :]
 
 # population
 population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
@@ -151,24 +137,10 @@ population.columns = ['population']
 spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
 # get toal spend per year by product
 total_spend = bof.make_total(spend, years, idx_dict)
-#total_spend.loc['4.2.1 Imputed rentals of owner occupiers', :] = 0 # had to add this, otherwise it creates a huge mess with proportions, etc.
 # get toal emissions per year per product
 temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
         for year in years}
 total_co2 = bof.make_total(temp, years, idx_dict)
-
-"""
-# check prop_spend
-
-for year in years:
-    ax = sns.scatterplot(data=prop_spend, x=2001, y=year)
-    x = np.linspace(*ax.get_xlim())
-    ax.plot(x, x)
-    plt.show()
-    
-    
-"""
-
 
 # deflated total spend
 defl_spend = pd.DataFrame(index = total_spend.index)
@@ -179,7 +151,7 @@ defl_tot_spend_percapita = defl_tot_spend.join(pd.DataFrame(population))
 defl_tot_spend_percapita = defl_tot_spend_percapita[0] / defl_tot_spend_percapita['population']
 
 # proportional spend          
-prop_spend = defl_spend.apply(lambda x: x/x.sum()) # total_spend.apply(lambda x: x/x.sum())
+prop_spend = defl_spend.apply(lambda x: x/x.sum())
 
 # deflated emission 
 defl_co2 = (total_co2 / (defl_spend)).astype(float)
@@ -190,13 +162,13 @@ footprint = {}
 for year in years:
     temp = {}
     # pop (1x1)
-    temp['population'] = np.array(population.loc[year, 'population'])# / 1000000 # use to rescale
+    temp['population'] = np.array(population.loc[year, 'population'])
     # emission intensities, deflated (1x105)
     temp['ghg_intensities_deflated'] = np.array(defl_co2.loc[:, year:year].T.fillna(0))
     # prop spend from yhh (105x1)
     temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year].fillna(0))
     # total spend from yhh, deflated (1x1)
-    temp['total_spend_deflated_percapita'] = np.array(defl_tot_spend_percapita[year]) #/ 100000 # use to rescale
+    temp['total_spend_deflated_percapita'] = np.array(defl_tot_spend_percapita[year])
     
     sda_order = list(temp.keys())
     
@@ -218,6 +190,27 @@ for year in years:
     sda[year] = bof.sda(sda_1, sda_0)
     sda[year].columns = ['total'] + sda_order
    
+#############################
+## Carbon multiplier index ##
+#############################
+
+years = list(hhd_ghg.keys())
+cm_base_year = 2010
+cpi_cm = cpi.apply(lambda x: x / cpi[cm_base_year] * 100)
+
+# get total spend to make other data (from yhh)
+spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
+# get toal spend per year by product
+total_spend = bof.make_total(spend, years, idx_dict)
+# get toal emissions per year per product
+temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
+        for year in years}
+total_co2 = bof.make_total(temp, years, idx_dict)
+
+# calculate index by getting multiplier and deflating it
+defl_cm = total_co2 / total_spend * cpi_cm
+# adjust base year to 100%
+cm_index = defl_cm.apply(lambda x: x/defl_cm[cm_base_year]*100)
 
 ##############
 ## Save All ##
@@ -231,5 +224,4 @@ writer = pd.ExcelWriter(outputs_filepath + 'basket_2024/SDA.xlsx')
 for year in sda.keys():
     sda[year].to_excel(writer, sheet_name=str(year))
 writer.save()
-
 pickle.dump(sda, open(outputs_filepath + 'basket_2024/SDA.p', 'wb' ) )

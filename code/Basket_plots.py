@@ -55,12 +55,8 @@ equ_hhd = equ_hhd.sum(axis=1, level=0).rename(columns=ccp1_dict)
 
 cm_index.index = pd.MultiIndex.from_arrays([[ccp1_dict[int(x.split('.')[0])] for x in cm_index.index], cm_index.index.tolist()])
 
-cm_index2 = cm_index.sum(axis=0, level=0)
-cm_index2_pct = cm_index2.apply(lambda x: x / cm_index2[str(cpi_base_year)] * 100).T
-
 # fix years
 equ_hhd.index = [int(x) for x in equ_hhd.index]
-cm_index2_pct.index = [int(x) for x in cm_index2_pct.index]
 
 ###########
 ## Plots ##
@@ -121,6 +117,17 @@ sda_mean = sda.set_index('year')['mean'].drop([2020, 2021])
 sda_mean.plot(kind='line');plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_line.png', dpi=200, bbox_inches='tight')
 
-
 sda_mean.drop('total', axis=1).plot(kind='bar', stacked=True);plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_bar.png', dpi=200, bbox_inches='tight')
+
+
+sda_pct = sda_mean.drop('total', axis=1)
+temp = cp.copy(sda_pct)
+for item in temp.columns:
+    temp.loc[temp[item] < 0, item] = 0
+sda_pct['total'] = temp.sum(1)
+sda_pct = sda_pct.apply(lambda x: x/sda_pct['total'] * 100)
+
+sda_pct.drop('total', axis=1).plot(kind='bar', stacked=True);plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
+plt.axhline(100, linestyle='--', c='k'); plt.axhline(-100, linestyle='--', c='k'); 
+plt.savefig(plots_filepath + 'SDA_pct_bar.png', dpi=200, bbox_inches='tight')
