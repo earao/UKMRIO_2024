@@ -89,9 +89,7 @@ equ_hhd = equ_hhd.set_index('year')
 # import basket data
 basket = pd.read_csv(data_filepath + 'processed/Basket_data/Basket_spends.csv')
 basket['lcfs'] = [x.split(' ')[0] for x in basket['lcfs']]
-basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])   
-
-basket_test = basket[['spend']].unstack(level='lcfs').T.mean(axis=1, level=0)
+basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])  
 
 # calculate basket emissions
 temp = pd.DataFrame(multipliers_all.unstack())
@@ -99,22 +97,26 @@ temp['lcfs'] = [x[1].split(' ')[0] for x in temp.index.tolist()]
 temp.index.names = ['year', 'full_label']
 temp = temp.set_index('lcfs', append=True); temp.columns = ['multiplier']
 
+# get ghg emissions
 basket_ghg = basket.join(temp, how='left')
 basket_ghg['ghg'] = basket_ghg['spend'] * basket_ghg['multiplier'] 
 
-# get ghg emissions
-basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs', 'full_label']).droplevel(axis=1, level=[0, 1]).fillna(0)
+basket_ghg = basket_ghg[['ghg']].unstack(level=['lcfs', 'full_label']).droplevel(axis=1, level=[0, 1])
 order = []
 for item in multipliers_all.index.tolist():
     if item in basket_ghg.columns:
         order.append(item)
         
+# get mean ghg for each year
+basket_ghg = basket_ghg.mean(axis=0, level='year', skipna=True).fillna(basket_ghg.mean())
+
+# sort
 basket_ghg = basket_ghg[order]
 basket_ghg['TOTAL'] = basket_ghg.sum(1)
 basket_ghg = basket_ghg.T
 
 # calculate basket_change compared to 2015
-basket_change = basket_ghg.apply(lambda x: x / basket_ghg[(2015, 201501)] * 100)
+basket_change = basket_ghg.apply(lambda x: (x / basket_ghg[(2015)] * 100).replace(np.inf, np.nan))
 
 #########
 ## SDA ##
@@ -195,7 +197,7 @@ for year in years:
 #############################
 
 years = list(hhd_ghg.keys())
-cm_base_year = 2010
+cm_base_year = 2015
 cpi_cm = cpi.apply(lambda x: x / cpi[cm_base_year] * 100)
 
 # get total spend to make other data (from yhh)
@@ -207,10 +209,51 @@ temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd
         for year in years}
 total_co2 = bof.make_total(temp, years, idx_dict)
 
+# save order
+order = total_spend.index.tolist()
+
 # calculate index by getting multiplier and deflating it
 defl_cm = total_co2 / total_spend * cpi_cm
+defl_cm = defl_cm.drop(2022, axis=1)
+
+# fill in missing values with mean from either side
+temp = defl_cm[defl_cm.isna().any(axis=1)]
+# fill 2001 with nearest value
+for year in years[1:]:
+    temp.loc[temp[years[0]].isna() == True, years[0]] = temp[year]
+# fill 2021 with nearest value
+years.reverse()
+for year in years[1:]:
+    temp.loc[temp[years[0]].isna() == True, years[0]] = temp[year]
+years.reverse()
+# fill in other missing values with gradual mean to either side
+temp = temp.T
+for item in temp.columns:
+    fill = []
+    
+    temp2 = temp[[item]]
+    missing = temp2[temp2.isna().any(axis=1)].index.tolist()
+    
+    for year in years:
+        if year in missing:
+            for i in list(range(years[0], year)):
+                if i not in missing:
+                    start = i
+            for i in list(reversed(range(year+1, years[-1]+1))):
+                if i not in missing:
+                    end = i
+            fill.append((temp.loc[[start, end], item]).mean())
+            print(year, (temp.loc[[start, end], item]).mean())
+        else:
+            fill.append(temp.loc[year, item])
+            print(year, temp.loc[year, item])
+    temp[item] = fill
+
+defl_cm = defl_cm.drop(temp.columns.tolist()).append(temp.T).loc[order]
+
 # adjust base year to 100%
 cm_index = defl_cm.apply(lambda x: x/defl_cm[cm_base_year]*100)
+
 
 ##############
 ## Save All ##

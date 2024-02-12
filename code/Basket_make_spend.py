@@ -77,7 +77,7 @@ lookup['ITEM_ID'] = lookup['ITEM_ID'].astype(str)
 # calculate basket price by coicop
 basket = basket.merge(lookup[['ITEM_ID', 'lcfs']], on='ITEM_ID', how='left')\
     .groupby(['INDEX_DATE', 'lcfs']).sum()[['spend', 'CPIH_COICOP_WEIGHT']].reset_index()
-basket['spend'] = basket['spend'] / basket['CPIH_COICOP_WEIGHT'] # check method of how CPIH weights are used for CPI
+# basket['spend'] = basket['spend'] / basket['CPIH_COICOP_WEIGHT'] # check method of how CPIH weights are used for CPI
 
 basket['year'] = [int(x[:4]) for x in basket['INDEX_DATE']]
 basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])  

@@ -26,7 +26,7 @@ outputs_filepath = wd + 'outputs/'
 plots_filepath = outputs_filepath + 'basket_2024/plots/'
 
 cpi_base_year = 2010
-years = list(range(2001, 2020))
+years = list(range(2001, 2022))
 
 # load data
 equ_hhd = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household.csv', index_col=0).drop(['total_ghg'], axis=1)
@@ -63,13 +63,12 @@ equ_hhd.index = [int(x) for x in equ_hhd.index]
 ###########
 
 # equivalised household
-equ_hhd.drop([2020, 2021]).plot(kind='bar', stacked=True); plt.legend(bbox_to_anchor=(1,1)); 
+equ_hhd.plot(kind='bar', stacked=True); plt.legend(bbox_to_anchor=(1,1)); 
 #plt.title('Equivalised household emissions'); 
 plt.ylabel('tCO2e'); plt.savefig(plots_filepath + 'Equ_hhlds.png', dpi=200, bbox_inches='tight')
 
 
 # carbon multipler index
-cm_index = cm_index.drop(['2020', '2021'], axis=1)
 cm_index.columns = [int(x) for x in cm_index.columns]
 avg = cp.copy(cm_index)
 temp = cp.copy(avg)
@@ -90,7 +89,7 @@ for item in list(ccp1_dict.values()):
 
 
 # basket change    
-basket_change = basket_change.drop('TOTAL').drop(['2020', '2021'], axis=1).mean(axis=1, level=0, skipna=True)
+basket_change = basket_change.drop('TOTAL').mean(axis=1, level=0, skipna=True)
 basket_change.columns = [int(x) for x in basket_change.columns]
 
 avg = cp.copy(basket_change)
@@ -113,7 +112,7 @@ for item in list(ccp1_dict.values()):
     plt.show()
 
 # SDA
-sda_mean = sda.set_index('year')['mean'].drop([2020, 2021])
+sda_mean = sda.set_index('year')['mean']
 sda_mean.plot(kind='line');plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_line.png', dpi=200, bbox_inches='tight')
 
