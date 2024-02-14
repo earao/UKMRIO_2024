@@ -89,7 +89,7 @@ equ_hhd = equ_hhd.set_index('year')
 # import basket data
 basket = pd.read_csv(data_filepath + 'processed/Basket_data/Basket_spends.csv')
 basket['lcfs'] = [x.split(' ')[0] for x in basket['lcfs']]
-basket = basket.set_index(['lcfs', 'year', 'INDEX_DATE'])  
+basket = basket.set_index(['INDEX_DATE', 'lcfs', 'year']).drop(201711).mean(level=['lcfs', 'year'])
 
 # calculate basket emissions
 temp = pd.DataFrame(multipliers_all.unstack())
@@ -108,7 +108,7 @@ for item in multipliers_all.index.tolist():
         order.append(item)
         
 # get mean ghg for each year
-basket_ghg = basket_ghg.mean(axis=0, level='year', skipna=True).fillna(basket_ghg.mean())
+basket_ghg = basket_ghg.fillna(basket_ghg.mean())
 
 # sort
 basket_ghg = basket_ghg[order]
@@ -117,6 +117,21 @@ basket_ghg = basket_ghg.T
 
 # calculate basket_change compared to 2015
 basket_change = basket_ghg.apply(lambda x: (x / basket_ghg[(2015)] * 100).replace(np.inf, np.nan))
+
+# get 3 year average
+basket_change_3y = cp.copy(basket_change)
+years = basket_change_3y.columns.tolist()
+
+basket_change_3y[years[-1]] = basket_change[[years[-1], years[-1]-1]].mean(1)
+for year in years:
+    if year == min(years):
+        basket_change_3y[year] = basket_change[[year, year+1]].mean(1)
+    elif year == max(years):
+        basket_change_3y[year] = basket_change[[year-1, year]].mean(1)
+    else:
+        basket_change_3y[year] = basket_change[[year-1, year, year+1]].mean(1)
+
+basket_change_3y = basket_change_3y.apply(lambda x: (x / basket_change_3y[(2015)] * 100))
 
 #########
 ## SDA ##
@@ -128,7 +143,7 @@ basket_change = basket_ghg.apply(lambda x: (x / basket_ghg[(2015)] * 100).replac
 # Structure: pop (1x1) * emission intensities, deflated (1x105) * prop spend from yhh (105x1) * total spend from yhh, deflated (1x1)
 
 years = list(hhd_ghg.keys())
-sda_base_year = 2001
+sda_base_year = 2015
 cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
 
 # population
@@ -191,6 +206,17 @@ for year in years:
     sda_0, sda_1 = sda_vars[sda_base_year], sda_vars[year]
     sda[year] = bof.sda(sda_1, sda_0)
     sda[year].columns = ['total'] + sda_order
+    
+# make summary table
+
+sda_mean = pd.DataFrame()
+for year in list(sda.keys()):
+    temp = cp.copy(sda[year])
+    temp['total'] = temp.loc['SDA_0', 'total']
+    temp = pd.DataFrame(temp.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp['year'] = year
+    sda_mean = sda_mean.append(temp.fillna(0))
+
    
 #############################
 ## Carbon multiplier index ##
@@ -262,6 +288,8 @@ cm_index = defl_cm.apply(lambda x: x/defl_cm[cm_base_year]*100)
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
+basket_change_3y.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv')
+sda_mean.to_csv(outputs_filepath + 'basket_2024/SDA_mean.csv')
 
 writer = pd.ExcelWriter(outputs_filepath + 'basket_2024/SDA.xlsx')
 for year in sda.keys():
