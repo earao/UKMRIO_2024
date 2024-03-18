@@ -35,7 +35,7 @@ for year in years:
     hhdspend[year] = lcfs[year].loc[:,'1.1.1.1.1':'12.7.1.1.6'].astype(float) # already multiplied by weight
   
 # calculate emissions
-hhd_ghg, multipliers, yhh_wide = estimate_emissions.make_footprint(hhdspend, results_filepath, model_inputs)
+hhd_ghg, hhd_ghg_dom, hhd_ghg_imp, multipliers, yhh_wide = estimate_emissions.make_footprint(hhdspend, results_filepath, model_inputs)
 
 # save product names
 idx = hhd_ghg[years[0]].columns.tolist()
