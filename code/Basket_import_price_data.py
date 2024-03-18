@@ -43,7 +43,8 @@ for year in years:
                 # calculate average
                 price['PRICE_W'] = price['STRATUM_WEIGHT'] * price['PRICE']
                 price = price.groupby(['QUOTE_DATE', 'ITEM_ID', 'FILE', 'FILE_DATE']).sum()[['STRATUM_WEIGHT', 'PRICE_W']]
-                price['PRICE'] = price['PRICE_W'] / price['STRATUM_WEIGHT']
+                #price['PRICE'] = price['PRICE_W'] / price['STRATUM_WEIGHT']
+                price['PRICE'] = price['PRICE_W']
                 
                 # save file
                 price.to_csv(data_filepath + 'processed/Basket_data/Prices/average_prices_' + date + '.csv')

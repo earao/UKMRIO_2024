@@ -22,7 +22,7 @@ else:
 data_filepath = wd + 'data/'
 results_filepath = wd + 'outputs/results_2024/'
 lcf_filepath = wd + 'data/raw/LCFS/'
-model_inputs = wd + 'data/model_inputs/'
+model_inputs = wd + 'data/model_inputs/' 
 
 years = list(range(2001, 2022))
 
