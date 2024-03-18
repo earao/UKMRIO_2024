@@ -28,6 +28,8 @@ years = list(range(2001, 2022))
 
 # load data
 equ_hhd = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household.csv', index_col=0).drop(['total_ghg'], axis=1)
+equ_hhd_dom = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household_domestic.csv', index_col=0).drop(['total_ghg'], axis=1)
+equ_hhd_imp = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household_imports.csv', index_col=0).drop(['total_ghg'], axis=1)
 cm_index = pd.read_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv', index_col=0)
 basket_change = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv', index_col=0, header=[0, 1])
 basket_change_3y = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv', index_col=0, header=[0, 1])
@@ -42,7 +44,11 @@ ccp1_dict = {1: 'Food and non-alcoholic beverages', 2: 'Alcoholic beverages, tob
              11: 'Restaurants and accommodation services', 12: 'Miscellaneous'}
 
 equ_hhd.columns = [int(x.split('.')[0]) for x in equ_hhd.columns]
+equ_hhd_dom.columns = [int(x.split('.')[0]) for x in equ_hhd_dom.columns]
+equ_hhd_imp.columns = [int(x.split('.')[0]) for x in equ_hhd_imp.columns]
 equ_hhd = equ_hhd.sum(axis=1, level=0).rename(columns=ccp1_dict)
+equ_hhd_dom = equ_hhd_dom.sum(axis=1, level=0).rename(columns=ccp1_dict)
+equ_hhd_imp = equ_hhd_imp.sum(axis=1, level=0).rename(columns=ccp1_dict)
 
 cm_index.index = pd.MultiIndex.from_arrays([[ccp1_dict[int(x.split('.')[0])] for x in cm_index.index], cm_index.index.tolist()])
 

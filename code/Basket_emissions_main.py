@@ -44,8 +44,14 @@ idx = hhd_ghg[years[0]].columns.tolist()
 for year in years:
     hhd_ghg[year] = hhd_ghg[year].fillna(0).apply(lambda x: x/people[year]['weight'])
     hhd_ghg[year] = people[year].join(hhd_ghg[year])
+    hhd_ghg_dom[year] = hhd_ghg_dom[year].fillna(0).apply(lambda x: x/people[year]['weight'])
+    hhd_ghg_dom[year] = people[year].join(hhd_ghg_dom[year])
+    hhd_ghg_imp[year] = hhd_ghg_imp[year].fillna(0).apply(lambda x: x/people[year]['weight'])
+    hhd_ghg_imp[year] = people[year].join(hhd_ghg_imp[year])
     
 # save household results
 pickle.dump(hhd_ghg, open(results_filepath + 'GHG_by_hhds.p', 'wb'))
+pickle.dump(hhd_ghg_dom, open(results_filepath + 'GHG_by_hhds_dom.p', 'wb'))
+pickle.dump(hhd_ghg_imp, open(results_filepath + 'GHG_by_hhds_imp.p', 'wb'))
 pickle.dump(multipliers, open(results_filepath + 'GHG_multipliers.p', 'wb'))
 pickle.dump(yhh_wide, open(results_filepath + 'SPEND_yhh.p', 'wb'))

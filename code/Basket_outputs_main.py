@@ -32,6 +32,8 @@ outputs_filepath = wd + 'outputs/'
 
 # load data
 hhd_ghg = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds.p', 'rb')) # emissions by household in survey
+hhd_ghg_dom = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds_dom.p', 'rb')) # emissions by household in survey
+hhd_ghg_imp = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds_imp.p', 'rb')) # emissions by household in survey
 multipliers = pickle.load(open(outputs_filepath + 'results_2024/GHG_multipliers.p', 'rb'))
 
 years = list(multipliers.keys())
@@ -67,20 +69,41 @@ cpi.loc['4.2.1 Imputed rentals of owner occupiers', :] = cpi.loc['4.1.1 Actual r
 years = list(hhd_ghg.keys())
 
 equ_hhd = pd.DataFrame(columns=hhd_ghg[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+equ_hhd_dom = pd.DataFrame(columns=hhd_ghg_dom[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+equ_hhd_imp = pd.DataFrame(columns=hhd_ghg_imp[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+
 for year in years:
     temp = cp.copy(hhd_ghg[year])
+    temp_d = cp.copy(hhd_ghg_dom[year])
+    temp_i = cp.copy(hhd_ghg_imp[year])
     if temp['OECD_mod'].sum() == 0:
         print(str(year) + ' missing OECD modifier')
     temp['pop'] = temp['OECD_mod'] * temp['weight']
     temp.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
         .apply(lambda x:x*temp['weight'])
+    temp_d.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp_d.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
+        .apply(lambda x:x*temp['weight'])
+    temp_i.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp_i.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
+        .apply(lambda x:x*temp['weight'])
     temp = temp.sum(0)
+    temp_d = temp_d.sum(0)
+    temp_i = temp_i.sum(0)
     pop = temp['pop']
     temp = (temp.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
     temp['total_ghg'] = temp.sum()
     temp['year'] = year
+    temp_d = (temp_d.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
+    temp_d['total_ghg'] = temp_d.sum()
+    temp_d['year'] = year
+    temp_i = (temp_i.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
+    temp_i['total_ghg'] = temp_i.sum()
+    temp_i['year'] = year
     equ_hhd = equ_hhd.append(pd.DataFrame(temp).T)
-equ_hhd = equ_hhd.set_index('year')   
+    equ_hhd_dom = equ_hhd_dom.append(pd.DataFrame(temp_d).T)
+    equ_hhd_imp = equ_hhd_imp.append(pd.DataFrame(temp_i).T)
+equ_hhd = equ_hhd.set_index('year') 
+equ_hhd_dom = equ_hhd_dom.set_index('year') 
+equ_hhd_imp = equ_hhd_imp.set_index('year')   
 
 #####################
 ## Basket of goods ##
@@ -286,6 +309,8 @@ cm_index = defl_cm.apply(lambda x: x/defl_cm[cm_base_year]*100)
 ##############
 
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
+equ_hhd_dom.to_csv(outputs_filepath + 'basket_2024/equivalised_household_domestic.csv')
+equ_hhd_imp.to_csv(outputs_filepath + 'basket_2024/equivalised_household_imports.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
 basket_change_3y.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv')
