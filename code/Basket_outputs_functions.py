@@ -43,6 +43,20 @@ def import_cpi(data_filepath, idx_dict, cpi_base_year):
     
     return cpi
 
+def import_deflated_MRIO(data_filepath,ukmrio,years):
+    S_d = {}
+    U_d = {}
+    Y_d = {}
+    deflators = pd.read_excel(data_filepath + 'deflators_AO2024.xlsx',index_col=0)/100
+    
+    for yr in years:
+        def_mult = np.tile(np.tile(deflators.loc[yr],(1,15)),(1680,1))
+        def_mult_fd = np.tile(np.tile(deflators.loc[yr],(1,15)),(43,1))
+        S_d[yr] = ukmrio['S'][yr]*def_mult
+        U_d[yr] = ukmrio['U'][yr]*np.transpose(def_mult)
+        Y_d[yr] = ukmrio['Y'][yr]*np.transpose(def_mult_fd)
+    
+    return (S_d,U_d,Y_d)
 
 def sda(sda_0,sda_1):
     
