@@ -242,11 +242,99 @@ for year in list(sda.keys()):
     sda_mean = sda_mean.append(temp.fillna(0))
 
  
+# SDA by main COICOP
+
+# Structure: pop (1x1) * emission intensities, deflated (1x105)  * per cap spend from yhh on each COICOP, deflated (105x1)
+
+years = list(hhd_ghg.keys())
+sda_base_year = 2015
+cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
+
+# population
+population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
+population.columns = ['population']
+
+# get total spend to make other data (from yhh)
+spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
+total_spend = bof.make_total(spend, years, idx_dict)
+
+# deflated total spend
+defl_spend = pd.DataFrame(index = total_spend.index)
+for year in years:
+    defl_spend[year] = total_spend[year] / (cpi_sda[year] / 100)
+
+# get deflated toal spend per year by main product
+defl_spend_spend_by_COICOP12 = bof.make_COICOP12(defl_spend, years, idx_dict)
+# get toal emissions per year per product
+temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
+        for year in years}
+total_co2 = bof.make_total(temp, years, idx_dict)
+
+# deflated total spend
+defl_spend = pd.DataFrame(index = total_spend.index)
+for year in years:
+    defl_spend[year] = total_spend[year] / (cpi_sda[year] / 100)
+defl_tot_spend = pd.DataFrame(defl_spend.sum(axis=0))
+defl_tot_spend_percapita = defl_tot_spend.join(pd.DataFrame(population))
+defl_tot_spend_percapita = defl_tot_spend_percapita[0] / defl_tot_spend_percapita['population']
+
+# proportional spend          
+prop_spend = defl_spend.apply(lambda x: x/x.sum())
+
+# deflated emission 
+defl_co2 = (total_co2 / (defl_spend)).astype(float)
+
+# make SDA variables
+sda_vars = {}
+footprint = {}
+for year in years:
+    temp = {}
+    # pop (1x1)
+    temp['population'] = np.array(population.loc[year, 'population'])
+    # emission intensities, deflated (1x105)
+    temp['ghg_intensities_deflated'] = np.array(defl_co2.loc[:, year:year].T.fillna(0))
+    # prop spend from yhh (105x1)
+    temp['proportional_spend'] = np.array(prop_spend.loc[:, year:year].fillna(0))
+    # total spend from yhh, deflated (1x1)
+    temp['total_spend_deflated_percapita'] = np.array(defl_tot_spend_percapita[year])
+    
+    sda_order = list(temp.keys())
+    
+    # emissions
+    foot = cp.copy(temp[sda_order[0]])
+    for item in sda_order[1:]:
+        foot = np.dot(foot, temp[item])
+    footprint[year] = foot[0][0]
+    
+    # format to match function
+    sda_vars[year] = {}
+    for i in range(len(sda_order)):
+        sda_vars[year][i] = temp[sda_order[i]]
+
+# Run Analysis   
+sda = {}
+for year in years:
+    sda_0, sda_1 = sda_vars[sda_base_year], sda_vars[year]
+    sda[year] = bof.sda(sda_1, sda_0)
+    sda[year].columns = ['total'] + sda_order
+    
+# make summary table
+
+sda_mean = pd.DataFrame()
+for year in list(sda.keys()):
+    temp = cp.copy(sda[year])
+    temp['total'] = temp.loc['SDA_0', 'total']
+    temp = pd.DataFrame(temp.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp['year'] = year
+    sda_mean = sda_mean.append(temp.fillna(0))
+
+
 # Production SDA
 
 # Structure - for domestic consumption: UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x112) * UK domestic final demand, deflated (112x1)
 # Structure - for reimport : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1562) * UK final demand, deflated (1562x1)
-# Structure - for export : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1680) * UK final demand, deflated (1680x1)
+# Structure - for export : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1680) * row final demand, deflated (112x1)
+# Structure - for export : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1680) * row final demand, deflated (1562x1)
 
 # load meta data from [UKMRIO]
 meta = pickle.load(open(outputs_filepath + 'results_2024/meta.p', "rb" ))

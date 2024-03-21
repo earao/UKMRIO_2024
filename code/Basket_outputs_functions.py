@@ -21,6 +21,29 @@ def make_total(data, years, idx_dict):
     
     return total_data
 
+def make_COICOP12(data, years, idx_dict):
+    total_data = pd.DataFrame()
+    for year in years:
+        temp = pd.DataFrame(data[year].sum(axis=0)).T
+        temp['year'] = year
+        total_data = total_data.append(temp)
+    total_data = total_data.set_index('year').T.fillna(0)
+    total_data.index = [x.split(' ')[0] for x in total_data.index]
+    total_data = total_data.rename(index=idx_dict)
+    
+    # Change to coicop 1
+    ccp1_dict = {1: 'Food and non-alcoholic beverages', 2: 'Alcoholic beverages, tobacco and narcotics',
+                 3: 'Clothing and footwear', 4: 'Housing, water, electricity, gas and other fuels',
+                 5: 'Furnishings, household equipment and routine household maintenance', 6: 'Health', 7: 'Transport',
+                 8: 'Information and communication', 9: 'Recreation, sport and culture', 10: 'Education services',
+                 11: 'Restaurants and accommodation services', 12: 'Miscellaneous'}
+
+    total_data.index = [int(x.split('.')[0]) for x in total_data.index]
+    total_data = total_data.groupby(level=0).sum().rename(index=ccp1_dict)
+    
+    
+    return total_data
+
 def import_cpi(data_filepath, idx_dict, cpi_base_year):  
     cpi = {}
     cpi['2008-2022'] = pd.read_excel(data_filepath + 'raw/CPI/202311_consumerpriceinflationdetailedreferencetables.xlsx', sheet_name='Table 9', index_col=2, header=5)\
