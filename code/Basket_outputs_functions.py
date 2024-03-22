@@ -21,16 +21,8 @@ def make_total(data, years, idx_dict):
     
     return total_data
 
-def make_COICOP12(data, years, idx_dict):
-    total_data = pd.DataFrame()
-    for year in years:
-        temp = pd.DataFrame(data[year].sum(axis=0)).T
-        temp['year'] = year
-        total_data = total_data.append(temp)
-    total_data = total_data.set_index('year').T.fillna(0)
-    total_data.index = [x.split(' ')[0] for x in total_data.index]
-    total_data = total_data.rename(index=idx_dict)
-    
+def make_COICOP12(data):
+     
     # Change to coicop 1
     ccp1_dict = {1: 'Food and non-alcoholic beverages', 2: 'Alcoholic beverages, tobacco and narcotics',
                  3: 'Clothing and footwear', 4: 'Housing, water, electricity, gas and other fuels',
@@ -38,11 +30,11 @@ def make_COICOP12(data, years, idx_dict):
                  8: 'Information and communication', 9: 'Recreation, sport and culture', 10: 'Education services',
                  11: 'Restaurants and accommodation services', 12: 'Miscellaneous'}
 
-    total_data.index = [int(x.split('.')[0]) for x in total_data.index]
-    total_data = total_data.groupby(level=0).sum().rename(index=ccp1_dict)
+    data.index = [int(x.split('.')[0]) for x in data.index]
+    data = data.groupby(level=0).sum().rename(index=ccp1_dict)
     
     
-    return total_data
+    return data
 
 def import_cpi(data_filepath, idx_dict, cpi_base_year):  
     cpi = {}
@@ -75,9 +67,9 @@ def import_deflated_MRIO(data_filepath,ukmrio,years):
     for yr in years:
         def_mult = np.tile(np.tile(deflators.loc[yr],(1,15)),(1680,1))
         def_mult_fd = np.tile(np.tile(deflators.loc[yr],(1,15)),(43,1))
-        S_d[yr] = ukmrio['S'][yr]*def_mult
-        U_d[yr] = ukmrio['U'][yr]*np.transpose(def_mult)
-        Y_d[yr] = ukmrio['Y'][yr]*np.transpose(def_mult_fd)
+        S_d[yr] = ukmrio['S'][yr]/def_mult
+        U_d[yr] = ukmrio['U'][yr]/np.transpose(def_mult)
+        Y_d[yr] = ukmrio['Y'][yr]/np.transpose(def_mult_fd)
     
     return (S_d,U_d,Y_d)
 
