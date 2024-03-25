@@ -661,12 +661,12 @@ sda_vars1_c = {}
 sda_vars2_c = {}
 sda_vars3_c = {}
 sda_vars4_c = {}
-for c in range(0,12):
+for yr in years:
     sda_vars1 = {}
     sda_vars2 = {}
     sda_vars3 = {}
     sda_vars4 = {}
-    for yr in years:
+    for c in range(0,12):   
         temp1 = {}
         temp2 = {}
         temp3 = {}
@@ -682,7 +682,7 @@ for c in range(0,12):
         # emission intensities, deflated (1x112)
         temp3['row_domestic_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1680:1792]),0)
         # row final demand, deflated (1680x1)
-        temp3['domestic_final_demand'] = np.array(Y_d_12[yr][0:112,0:42])
+        temp3['domestic_final_demand'] = np.array(Y_d_12[yr][0:112,c])
         # emission intensities, deflated (1x112)
         temp4['row_row_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1792:3360]),0)
         # row final demand, deflated (1680x1)
@@ -694,72 +694,91 @@ for c in range(0,12):
         sda_order4 = list(temp4.keys())
         
         # format to match function
-        sda_vars1[yr] = {}
-        sda_vars2[yr] = {}
-        sda_vars3[yr] = {}
-        sda_vars4[yr] = {}
+        sda_vars1[c] = {}
+        sda_vars2[c] = {}
+        sda_vars3[c] = {}
+        sda_vars4[c] = {}
         for i in range(len(sda_order1)):
-            sda_vars1[yr][i] = temp1[sda_order1[i]]
-            sda_vars2[yr][i] = temp2[sda_order2[i]]
-            sda_vars3[yr][i] = temp3[sda_order3[i]]
-            sda_vars4[yr][i] = temp4[sda_order4[i]]
-    sda_vars1_c[c] = sda_vars1
-    sda_vars2_c[c] = sda_vars2
-    sda_vars3_c[c] = sda_vars3
-    sda_vars4_c[c] = sda_vars4
+            sda_vars1[c][i] = temp1[sda_order1[i]]
+            sda_vars2[c][i] = temp2[sda_order2[i]]
+            sda_vars3[c][i] = temp3[sda_order3[i]]
+            sda_vars4[c][i] = temp4[sda_order4[i]]
+    sda_vars1_c[yr] = sda_vars1
+    sda_vars2_c[yr] = sda_vars2
+    sda_vars3_c[yr] = sda_vars3
+    sda_vars4_c[yr] = sda_vars4
     
-# Run Analysis   
-sda1 = {}
-sda2 = {}
-sda3 = {}
-sda4 = {}
-for yr in years:
-    sda_0, sda_1 = sda_vars1[2001], sda_vars1[yr]
-    sda1[yr] = bof.sda(sda_1, sda_0)
-    sda1[yr].columns = ['total'] + sda_order1
-    
-    sda_2, sda_3 = sda_vars2[2001], sda_vars2[yr]
-    sda2[yr] = bof.sda(sda_3, sda_2)
-    sda2[yr].columns = ['total'] + sda_order2
-    
-    sda_4, sda_5 = sda_vars3[2001], sda_vars3[yr]
-    sda3[yr] = bof.sda(sda_5, sda_4)
-    sda3[yr].columns = ['total'] + sda_order3
-    
-    sda_6, sda_7 = sda_vars4[2001], sda_vars4[yr]
-    sda4[yr] = bof.sda(sda_7, sda_6)
-    sda4[yr].columns = ['total'] + sda_order4
+# Run Analysis 
+sda1_c = {}
+sda2_c = {}
+sda3_c = {}
+sda4_c = {}  
+for c in range (0,12):
+    sda1 = {}
+    sda2 = {}
+    sda3 = {}
+    sda4 = {}
+    for yr in years:
+        sda_0, sda_1 = sda_vars1_c[2001][c], sda_vars1_c[yr][c]
+        sda1[yr] = bof.sda(sda_1, sda_0)
+        sda1[yr].columns = ['total'] + sda_order1
+        
+        sda_2, sda_3 = sda_vars2_c[2001][c], sda_vars2_c[yr][c]
+        sda2[yr] = bof.sda(sda_3, sda_2)
+        sda2[yr].columns = ['total'] + sda_order2
+        
+        sda_4, sda_5 = sda_vars3_c[2001][c], sda_vars3_c[yr][c]
+        sda3[yr] = bof.sda(sda_5, sda_4)
+        sda3[yr].columns = ['total'] + sda_order3
+        
+        sda_6, sda_7 = sda_vars4_c[2001][c], sda_vars4_c[yr][c]
+        sda4[yr] = bof.sda(sda_7, sda_6)
+        sda4[yr].columns = ['total'] + sda_order4
+    sda1_c[c] = sda1
+    sda2_c[c] = sda2
+    sda3_c[c] = sda3
+    sda4_c[c] = sda4
 
 # make summary table
 
-c_sda_mean1 = pd.DataFrame()
-c_sda_mean2 = pd.DataFrame()
-c_sda_mean3 = pd.DataFrame()
-c_sda_mean4 = pd.DataFrame()
-for yr in list(sda1.keys()):
-    temp1 = cp.copy(sda1[yr])
-    temp1['total'] = temp1.loc['SDA_0', 'total']
-    temp1 = pd.DataFrame(temp1.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
-    temp1['year'] = yr
-    c_sda_mean1 = c_sda_mean1.append(temp1.fillna(0))
-    
-    temp2 = cp.copy(sda2[yr])
-    temp2['total'] = temp2.loc['SDA_0', 'total']
-    temp2 = pd.DataFrame(temp2.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
-    temp2['year'] = yr
-    c_sda_mean2 = c_sda_mean2.append(temp2.fillna(0))
-    
-    temp3 = cp.copy(sda3[yr])
-    temp3['total'] = temp3.loc['SDA_0', 'total']
-    temp3 = pd.DataFrame(temp3.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
-    temp3['year'] = yr
-    c_sda_mean3 = c_sda_mean3.append(temp3.fillna(0))
-    
-    temp4 = cp.copy(sda4[yr])
-    temp4['total'] = temp4.loc['SDA_0', 'total']
-    temp4 = pd.DataFrame(temp4.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
-    temp4['year'] = yr
-    c_sda_mean4 = c_sda_mean4.append(temp4.fillna(0))
+c_sda_mean1_c = {}
+c_sda_mean2_c = {}
+c_sda_mean3_c = {}
+c_sda_mean4_c = {}
+
+for c in range(0,12):
+    c_sda_mean1 = pd.DataFrame()
+    c_sda_mean2 = pd.DataFrame()
+    c_sda_mean3 = pd.DataFrame()
+    c_sda_mean4 = pd.DataFrame()
+    for yr in list(sda1.keys()):
+        temp1 = cp.copy(sda1_c[c][yr])
+        temp1['total'] = temp1.loc['SDA_0', 'total']
+        temp1 = pd.DataFrame(temp1.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp1['year'] = yr
+        c_sda_mean1 = c_sda_mean1.append(temp1.fillna(0))
+        
+        temp2 = cp.copy(sda2_c[c][yr])
+        temp2['total'] = temp2.loc['SDA_0', 'total']
+        temp2 = pd.DataFrame(temp2.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp2['year'] = yr
+        c_sda_mean2 = c_sda_mean2.append(temp2.fillna(0))
+        
+        temp3 = cp.copy(sda3_c[c][yr])
+        temp3['total'] = temp3.loc['SDA_0', 'total']
+        temp3 = pd.DataFrame(temp3.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp3['year'] = yr
+        c_sda_mean3 = c_sda_mean3.append(temp3.fillna(0))
+        
+        temp4 = cp.copy(sda4_c[c][yr])
+        temp4['total'] = temp4.loc['SDA_0', 'total']
+        temp4 = pd.DataFrame(temp4.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp4['year'] = yr
+        c_sda_mean4 = c_sda_mean4.append(temp4.fillna(0))
+    c_sda_mean1_c[c] = c_sda_mean1
+    c_sda_mean2_c[c] = c_sda_mean2
+    c_sda_mean3_c[c] = c_sda_mean3
+    c_sda_mean4_c[c] = c_sda_mean4
 
 #############################
 ## Carbon multiplier index ##
