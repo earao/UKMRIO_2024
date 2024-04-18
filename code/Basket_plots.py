@@ -43,7 +43,11 @@ ccp1_dict = {1: 'Food', 2: 'Alcohol & tobacco',
              11: 'Restaurants & hotels', 12: 'Miscellaneous'}
 
 equ_hhd.columns = [int(x.split('.')[0]) for x in equ_hhd.columns]
+equ_hhd_dom.columns = [int(x.split('.')[0]) for x in equ_hhd_dom.columns]
+equ_hhd_imp.columns = [int(x.split('.')[0]) for x in equ_hhd_imp.columns]
 equ_hhd = equ_hhd.sum(axis=1, level=0).rename(columns=ccp1_dict)
+equ_hhd_dom = equ_hhd_dom.sum(axis=1, level=0).rename(columns=ccp1_dict)
+equ_hhd_imp = equ_hhd_imp.sum(axis=1, level=0).rename(columns=ccp1_dict)
 
 cm_index.index = pd.MultiIndex.from_arrays([[ccp1_dict[int(x.split('.')[0])] for x in cm_index.index], cm_index.index.tolist()])
 

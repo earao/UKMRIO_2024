@@ -21,6 +21,21 @@ def make_total(data, years, idx_dict):
     
     return total_data
 
+def make_COICOP12(data):
+     
+    # Change to coicop 1
+    ccp1_dict = {1: 'Food and non-alcoholic beverages', 2: 'Alcoholic beverages, tobacco and narcotics',
+                 3: 'Clothing and footwear', 4: 'Housing, water, electricity, gas and other fuels',
+                 5: 'Furnishings, household equipment and routine household maintenance', 6: 'Health', 7: 'Transport',
+                 8: 'Information and communication', 9: 'Recreation, sport and culture', 10: 'Education services',
+                 11: 'Restaurants and accommodation services', 12: 'Miscellaneous'}
+
+    data.index = [int(x.split('.')[0]) for x in data.index]
+    data = data.groupby(level=0).sum().rename(index=ccp1_dict)
+    
+    
+    return data
+
 def import_cpi(data_filepath, idx_dict, cpi_base_year):  
     cpi = {}
     cpi['2008-2022'] = pd.read_excel(data_filepath + 'raw/CPI/202311_consumerpriceinflationdetailedreferencetables.xlsx', sheet_name='Table 9', index_col=2, header=5)\
@@ -43,6 +58,20 @@ def import_cpi(data_filepath, idx_dict, cpi_base_year):
     
     return cpi
 
+def import_deflated_MRIO(data_filepath,ukmrio,years):
+    S_d = {}
+    U_d = {}
+    Y_d = {}
+    deflators = pd.read_excel(data_filepath + 'deflators_AO2024.xlsx',index_col=0)/100
+    
+    for yr in years:
+        def_mult = np.tile(np.tile(deflators.loc[yr],(1,15)),(1680,1))
+        def_mult_fd = np.tile(np.tile(deflators.loc[yr],(1,15)),(43,1))
+        S_d[yr] = ukmrio['S'][yr]/def_mult
+        U_d[yr] = ukmrio['U'][yr]/np.transpose(def_mult)
+        Y_d[yr] = ukmrio['Y'][yr]/np.transpose(def_mult_fd)
+    
+    return (S_d,U_d,Y_d)
 
 def sda(sda_0,sda_1):
     

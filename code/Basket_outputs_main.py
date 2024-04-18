@@ -19,6 +19,7 @@ import numpy as np
 import Basket_outputs_functions as bof
 import seaborn as sns
 import matplotlib.pyplot as plt
+import Basket_emissions_functions as bem
 
 # set working directory
 # make different path depending on operating system
@@ -34,6 +35,8 @@ outputs_filepath = wd + 'outputs/'
 
 # load data
 hhd_ghg = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds.p', 'rb')) # emissions by household in survey
+hhd_ghg_dom = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds_dom.p', 'rb')) # emissions by household in survey
+hhd_ghg_imp = pickle.load(open(outputs_filepath + 'results_2024/GHG_by_hhds_imp.p', 'rb')) # emissions by household in survey
 multipliers = pickle.load(open(outputs_filepath + 'results_2024/GHG_multipliers.p', 'rb'))
 
 years = list(multipliers.keys())
@@ -69,20 +72,41 @@ cpi.loc['4.2.1 Imputed rentals of owner occupiers', :] = cpi.loc['4.1.1 Actual r
 years = list(hhd_ghg.keys())
 
 equ_hhd = pd.DataFrame(columns=hhd_ghg[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+equ_hhd_dom = pd.DataFrame(columns=hhd_ghg_dom[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+equ_hhd_imp = pd.DataFrame(columns=hhd_ghg_imp[years[0]].loc[:,'1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].columns)
+
 for year in years:
     temp = cp.copy(hhd_ghg[year])
+    temp_d = cp.copy(hhd_ghg_dom[year])
+    temp_i = cp.copy(hhd_ghg_imp[year])
     if temp['OECD_mod'].sum() == 0:
         print(str(year) + ' missing OECD modifier')
     temp['pop'] = temp['OECD_mod'] * temp['weight']
     temp.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
         .apply(lambda x:x*temp['weight'])
+    temp_d.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp_d.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
+        .apply(lambda x:x*temp['weight'])
+    temp_i.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'] = temp_i.loc[:, '1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.']\
+        .apply(lambda x:x*temp['weight'])
     temp = temp.sum(0)
+    temp_d = temp_d.sum(0)
+    temp_i = temp_i.sum(0)
     pop = temp['pop']
     temp = (temp.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
     temp['total_ghg'] = temp.sum()
     temp['year'] = year
+    temp_d = (temp_d.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
+    temp_d['total_ghg'] = temp_d.sum()
+    temp_d['year'] = year
+    temp_i = (temp_i.loc['1.1.1 Bread and cereals':'12.7.1 Other services n.e.c.'].astype(float) / pop.astype(float)) * 1.5
+    temp_i['total_ghg'] = temp_i.sum()
+    temp_i['year'] = year
     equ_hhd = equ_hhd.append(pd.DataFrame(temp).T)
-equ_hhd = equ_hhd.set_index('year')   
+    equ_hhd_dom = equ_hhd_dom.append(pd.DataFrame(temp_d).T)
+    equ_hhd_imp = equ_hhd_imp.append(pd.DataFrame(temp_i).T)
+equ_hhd = equ_hhd.set_index('year') 
+equ_hhd_dom = equ_hhd_dom.set_index('year') 
+equ_hhd_imp = equ_hhd_imp.set_index('year')   
 
 #####################
 ## Basket of goods ##
@@ -219,7 +243,545 @@ for year in list(sda.keys()):
     temp['year'] = year
     sda_mean = sda_mean.append(temp.fillna(0))
 
+ 
+# SDA by main COICOP
+# Structure: pop (1x1) * emission intensities, deflated (1x1)  * per cap spend from yhh on each COICOP, deflated (1x1)
+
+years = list(hhd_ghg.keys())
+sda_base_year = 2015
+cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
+
+# population
+population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
+population.columns = ['population']
+
+# get total spend to make other data (from yhh)
+spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
+total_spend = bof.make_total(spend, years, idx_dict)
+
+# deflated total spend
+defl_spend = pd.DataFrame(index = total_spend.index)
+for year in years:
+    defl_spend[year] = total_spend[year] / (cpi_sda[year] / 100)
+
+# get deflated toal spend per year by COICOP 12
+defl_spend_by_COICOP12 = bof.make_COICOP12(defl_spend)
+
+# get toal emissions per year by COICOP 12
+temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
+        for year in years}
+total_co2 = bof.make_total(temp, years, idx_dict)
+total_co2_by_COICOP12 = bof.make_COICOP12(total_co2, years, idx_dict)
+
+# deflated emissions intensity 
+defl_co2_per_unit_price = (total_co2_by_COICOP12 / (defl_spend_by_COICOP12)).astype(float)
+
+
+# deflated total spend per capita
+defl_spend_by_COICOP12_per_cap = pd.DataFrame(index = defl_spend_by_COICOP12.index)
+defl_spend_by_COICOP12_per_cap = defl_spend_by_COICOP12 / np.transpose(np.tile(population.loc[2001:2021],(1,12)))
+
+# make SDA variables
+sda_all = {}
+for c,coicop in enumerate(defl_spend_by_COICOP12.index):
+    sda_vars = {}
+    footprint = {}
+    
+    for year in years:
+        temp = {}
+        # pop (1x1)
+        temp['population'] = np.array(population.loc[year, 'population'])
+        # emission intensities, deflated (1x105)
+        temp['defl_spend_by_COICOP12_per_cap'] = np.array(defl_spend_by_COICOP12_per_cap.loc[coicop, year:year])
+        # prop spend from yhh (105x1)
+        temp['defl_co2_per_unit_price'] = np.array(defl_co2_per_unit_price.loc[coicop, year:year])
+        
+        sda_order = list(temp.keys())
+        
+        # emissions
+        foot = cp.copy(temp[sda_order[0]])
+        for item in sda_order[1:]:
+            foot = np.dot(foot, temp[item])
+        footprint[year] = foot
+        
+        # format to match function
+        sda_vars[year] = {}
+        for i in range(len(sda_order)):
+            sda_vars[year][i] = temp[sda_order[i]]
+        
+    sda_all[coicop] = sda_vars
+
+# Run Analysis   
+sda_a = {}
+for coicop in defl_spend_by_COICOP12.index:
+    sda = {}
+    for year in years:
+        sda_0, sda_1 = sda_all[coicop][2001], sda_all[coicop][year]
+        sda[year] = bof.sda(sda_1, sda_0)
+        sda[year].columns = ['total'] + sda_order
+        
+    sda_a[coicop] = sda
+    
+# make summary table
+
+sda_mean_all = {}
+for coicop in defl_spend_by_COICOP12.index:
+    sda_mean = pd.DataFrame()
+    for year in list(sda.keys()):
+        temp = cp.copy(sda_a[coicop][year])
+        temp['total'] = temp.loc['SDA_0', 'total']
+        temp = pd.DataFrame(temp.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp['year'] = year
+        sda_mean = sda_mean.append(temp.fillna(0))
+    sda_mean_all[coicop] = sda_mean
+
+
+# Production SDA
+
+# Structure - for domestic consumption: UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x112) * UK domestic final demand, deflated (112x1)
+# Structure - for reimport : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1562) * UK final demand, deflated (1562x1)
+# Structure - for export : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1680) * row final demand, deflated (112x1)
+# Structure - for export : UK industrty emission intensities, deflated (1x112) * domestic section of Leontief inverse, deflated (112x1680) * row final demand, deflated (1562x1)
+
+# load meta data from [UKMRIO]
+meta = pickle.load(open(outputs_filepath + 'results_2024/meta.p', "rb" ))
    
+ukmrio = {}; #means = {}
+for data in ['ghg', 'uk_ghg_direct', 'S', 'U', 'Y']:
+    ukmrio[data] = pickle.load(open(outputs_filepath + 'results_2024/' + data + '.p', "rb" ))
+   
+ # create year lists
+years = list(hhd_ghg.keys())
+
+deflator_filepath = wd + 'data/raw/ONS/ONS deflators/'
+S_d, U_d, Y_d = bof.import_deflated_MRIO(deflator_filepath,ukmrio,years) 
+L_d = {}
+x_d = {}
+for yr in years:
+    Z = bem.make_Z_from_S_U(S_d[yr], U_d[yr])
+    bigY = np.zeros(shape = [np.size(Y_d[yr], 0)*2, np.size(Y_d[yr], 1)])
+    bigY[np.size(Y_d[yr], 0):np.size(Y_d[yr], 0)*2, 0:] = Y_d[yr] 
+    x_d[yr] = bem.make_x(Z, bigY)
+    L_d[yr] = bem.make_L(Z, x_d[yr])
+    
+# make SDA variables
+sda_vars1 = {}
+sda_vars2 = {}
+sda_vars3 = {}
+sda_vars4 = {}
+footprint = {}
+for yr in years:
+    temp1 = {}
+    temp2 = {}
+    temp3 = {}
+    temp4 = {}
+    # emission intensities, deflated (1x112)
+    temp1['ghg_intensity_deflated'] = np.array(np.sum(ukmrio['ghg'][yr].iloc[0:112],1)/x_d[yr][0:112])
+    # domestic Leontief, deflated (112x112)
+    temp1['domestic_leontief_deflated'] = np.array(L_d[yr][0:112, 1680:1792])
+    # domestic final demand, deflated (112x1)
+    temp1['domestic_final_demand'] = np.array(np.sum(Y_d[yr].iloc[0:112,0:42],1))
+    # emission intensities, deflated (1x112)
+    temp2['ghg_intensity_deflated'] = np.array(np.sum(ukmrio['ghg'][yr].iloc[0:112],1)/x_d[yr][0:112])
+    # domestic Leontief, deflated (112x112)
+    temp2['row_leontief_deflated'] = np.array(L_d[yr][0:112, 1792:3360])
+    # domestic final demand, deflated (112x1)
+    temp2['domestic_final_demand_of_row'] = np.array(np.sum(Y_d[yr].iloc[112:1680,0:42],1))
+    # emission intensities, deflated (1x112)
+    temp3['ghg_intensity_deflated'] = np.array(np.sum(ukmrio['ghg'][yr].iloc[0:112],1)/x_d[yr][0:112])
+    # domestic Leontief, deflated (112x1680)
+    temp3['domestic_leontief_deflated'] = np.array(L_d[yr][0:112, 1680:1792])
+    # row final demand, deflated (1680x1)
+    temp3['row_final_demand'] = np.array(np.sum(Y_d[yr].iloc[0:112,42:43],1))
+    # emission intensities, deflated (1x112)
+    temp4['ghg_intensity_deflated'] = np.array(np.sum(ukmrio['ghg'][yr].iloc[0:112],1)/x_d[yr][0:112])
+    # domestic Leontief, deflated (112x1680)
+    temp4['domestic_leontief_deflated'] = np.array(L_d[yr][0:112, 1792:3350])
+    # row final demand, deflated (1680x1)
+    temp4['row_final_demand'] = np.array(np.sum(Y_d[yr].iloc[112:1680,42:43],1))
+    
+    sda_order1 = list(temp1.keys())
+    sda_order2 = list(temp2.keys())
+    sda_order3 = list(temp3.keys())
+    sda_order4 = list(temp4.keys())
+    
+    # emissions
+    foot1 = cp.copy(temp[sda_order1[0]])
+    foot2 = cp.copy(temp[sda_order2[0]])
+    foot3 = cp.copy(temp[sda_order3[0]])
+    foot4 = cp.copy(temp[sda_order4[0]])
+    for item in sda_order1[1:]:
+        foot1 = np.dot(foot1, temp1[item])
+        foot2 = np.dot(foot2, temp2[item])
+        foot3 = np.dot(foot3, temp3[item])
+        foot4 = np.dot(foot4, temp4[item])
+    footprint[yr,0] = foot1
+    footprint[yr,1] = foot2
+    footprint[yr,2] = foot3
+    footprint[yr,4] = foot4
+    
+    # format to match function
+    sda_vars1[yr] = {}
+    sda_vars2[yr] = {}
+    sda_vars3[yr] = {}
+    sda_vars4[yr] = {}
+    for i in range(len(sda_order1)):
+        sda_vars1[yr][i] = temp1[sda_order1[i]]
+        sda_vars2[yr][i] = temp2[sda_order2[i]]
+        sda_vars3[yr][i] = temp3[sda_order3[i]]
+        sda_vars4[yr][i] = temp3[sda_order4[i]]
+
+# Run Analysis   
+sda1 = {}
+sda2 = {}
+sda3 = {}
+sda4 = {}
+for yr in years:
+    sda_0, sda_1 = sda_vars1[2001], sda_vars1[yr]
+    sda1[yr] = bof.sda(sda_1, sda_0)
+    sda1[yr].columns = ['total'] + sda_order1
+    
+    sda_2, sda_3 = sda_vars2[2001], sda_vars2[yr]
+    sda2[yr] = bof.sda(sda_3, sda_2)
+    sda2[yr].columns = ['total'] + sda_order2
+    
+    sda_4, sda_5 = sda_vars3[2001], sda_vars3[yr]
+    sda3[yr] = bof.sda(sda_5, sda_4)
+    sda3[yr].columns = ['total'] + sda_order3
+    
+    sda_6, sda_7 = sda_vars4[2001], sda_vars4[yr]
+    sda4[yr] = bof.sda(sda_7, sda_6)
+    sda4[yr].columns = ['total'] + sda_order4
+
+# make summary table
+
+sda_mean1 = pd.DataFrame()
+sda_mean2 = pd.DataFrame()
+sda_mean3 = pd.DataFrame()
+sda_mean4 = pd.DataFrame()
+for yr in list(sda1.keys()):
+    temp1 = cp.copy(sda1[yr])
+    temp1['total'] = temp1.loc['SDA_0', 'total']
+    temp1 = pd.DataFrame(temp1.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp1['year'] = yr
+    sda_mean1 = sda_mean1.append(temp1.fillna(0))
+    
+    temp2 = cp.copy(sda2[yr])
+    temp2['total'] = temp2.loc['SDA_0', 'total']
+    temp2 = pd.DataFrame(temp2.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp2['year'] = yr
+    sda_mean2 = sda_mean2.append(temp2.fillna(0))
+    
+    temp3 = cp.copy(sda3[yr])
+    temp3['total'] = temp3.loc['SDA_0', 'total']
+    temp3 = pd.DataFrame(temp3.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp3['year'] = yr
+    sda_mean3 = sda_mean3.append(temp3.fillna(0))
+    
+    temp4 = cp.copy(sda4[yr])
+    temp4['total'] = temp4.loc['SDA_0', 'total']
+    temp4 = pd.DataFrame(temp4.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp4['year'] = yr
+    sda_mean4 = sda_mean4.append(temp3.fillna(0))
+
+# Comsumption SDA anne edit
+
+# Structure - UK industry emission intensities, deflated (1x112) * d_d section of Leontief inverse, deflated (112x112) * UK domestic final demand, deflated (112x1)
+# Structure - UK industry emission intensities, deflated (1x112) * d_i section of Leontief inverse, deflated (112x1562) * UK row demand, deflated (1562x1)
+# Structure - RoW industry emission intensities, deflated (1x1568) * i_d  section of Leontief inverse, deflated (1562x112) * UK domestic  final demand, deflated (112x1)
+# Structure - RoW industrty emission intensities, deflated (1x1568) * i_i section of Leontief inverse, deflated (1562x1562) * UK row final demand, deflated (1562x1)
+
+# load meta data from [UKMRIO]
+meta = pickle.load(open(outputs_filepath + 'results_2024/meta.p', "rb" ))
+   
+ukmrio = {}; #means = {}
+for data in ['ghg', 'uk_ghg_direct', 'S', 'U', 'Y']:
+    ukmrio[data] = pickle.load(open(outputs_filepath + 'results_2024/' + data + '.p', "rb" ))
+   
+ # create year lists
+years = list(hhd_ghg.keys())
+
+deflator_filepath = wd + 'data/raw/ONS/ONS deflators/'
+S_d, U_d, Y_d = bof.import_deflated_MRIO(deflator_filepath,ukmrio,years) 
+eL_d = {}
+for yr in years:
+    Z = bem.make_Z_from_S_U(S_d[yr], U_d[yr])
+    bigY = np.zeros(shape = [np.size(Y_d[yr], 0)*2, np.size(Y_d[yr], 1)])
+    bigY[np.size(Y_d[yr], 0):np.size(Y_d[yr], 0)*2, 0:] = Y_d[yr] 
+    x_d = bem.make_x(Z, bigY)
+    L_d = bem.make_L(Z, x_d)
+    bigstressor = np.zeros(shape = [np.size(Y_d[yr], 0)*2, 1])
+    bigstressor[0:np.size(Y_d[yr], 0), :] = ukmrio['ghg'][yr]
+    e = np.diag(np.sum(bigstressor, 1)/x_d)
+    eL_d[yr] = np.dot(e, L_d)
+    
+# make SDA variables
+sda_vars1 = {}
+sda_vars2 = {}
+sda_vars3 = {}
+sda_vars4 = {}
+footprint = {}
+for yr in years:
+    temp1 = {}
+    temp2 = {}
+    temp3 = {}
+    temp4 = {}
+    # emission intensities, deflated (1x112)
+    temp1['domestic_domestic_emissions_deflated'] = np.sum(np.array(eL_d[yr][0:112, 1680:1792]),0)
+    # domestic final demand, deflated (112x1)
+    temp1['domestic_final_demand'] = np.array(np.sum(Y_d[yr].iloc[0:112,0:42],1))
+    # emission intensities, deflated (1x112)
+    temp2['domestic_row_emissions_deflated'] = np.sum(np.array(eL_d[yr][0:112, 1792:3360]),0)
+    # domestic final demand, deflated (112x1)
+    temp2['domestic_final_demand_of_row'] = np.array(np.sum(Y_d[yr].iloc[112:1680,0:42],1))
+    # emission intensities, deflated (1x112)
+    temp3['row_domestic_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1680:1792]),0)
+    # row final demand, deflated (1680x1)
+    temp3['domestic_final_demand'] = np.array(np.sum(Y_d[yr].iloc[0:112,0:42],1))
+    # emission intensities, deflated (1x112)
+    temp4['row_row_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1792:3360]),0)
+    # row final demand, deflated (1680x1)
+    temp4['domestic_final_demand_of_row'] = np.array(np.sum(Y_d[yr].iloc[112:1680,0:42],1))
+    
+    sda_order1 = list(temp1.keys())
+    sda_order2 = list(temp2.keys())
+    sda_order3 = list(temp3.keys())
+    sda_order4 = list(temp4.keys())
+    
+    # format to match function
+    sda_vars1[yr] = {}
+    sda_vars2[yr] = {}
+    sda_vars3[yr] = {}
+    sda_vars4[yr] = {}
+    for i in range(len(sda_order1)):
+        sda_vars1[yr][i] = temp1[sda_order1[i]]
+        sda_vars2[yr][i] = temp2[sda_order2[i]]
+        sda_vars3[yr][i] = temp3[sda_order3[i]]
+        sda_vars4[yr][i] = temp4[sda_order4[i]]
+
+# Run Analysis   
+sda1 = {}
+sda2 = {}
+sda3 = {}
+sda4 = {}
+for yr in years:
+    sda_0, sda_1 = sda_vars1[2001], sda_vars1[yr]
+    sda1[yr] = bof.sda(sda_1, sda_0)
+    sda1[yr].columns = ['total'] + sda_order1
+    
+    sda_2, sda_3 = sda_vars2[2001], sda_vars2[yr]
+    sda2[yr] = bof.sda(sda_3, sda_2)
+    sda2[yr].columns = ['total'] + sda_order2
+    
+    sda_4, sda_5 = sda_vars3[2001], sda_vars3[yr]
+    sda3[yr] = bof.sda(sda_5, sda_4)
+    sda3[yr].columns = ['total'] + sda_order3
+    
+    sda_6, sda_7 = sda_vars4[2001], sda_vars4[yr]
+    sda4[yr] = bof.sda(sda_7, sda_6)
+    sda4[yr].columns = ['total'] + sda_order4
+
+# make summary table
+
+c_sda_mean1 = pd.DataFrame()
+c_sda_mean2 = pd.DataFrame()
+c_sda_mean3 = pd.DataFrame()
+c_sda_mean4 = pd.DataFrame()
+for yr in list(sda1.keys()):
+    temp1 = cp.copy(sda1[yr])
+    temp1['total'] = temp1.loc['SDA_0', 'total']
+    temp1 = pd.DataFrame(temp1.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp1['year'] = yr
+    c_sda_mean1 = c_sda_mean1.append(temp1.fillna(0))
+    
+    temp2 = cp.copy(sda2[yr])
+    temp2['total'] = temp2.loc['SDA_0', 'total']
+    temp2 = pd.DataFrame(temp2.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp2['year'] = yr
+    c_sda_mean2 = c_sda_mean2.append(temp2.fillna(0))
+    
+    temp3 = cp.copy(sda3[yr])
+    temp3['total'] = temp3.loc['SDA_0', 'total']
+    temp3 = pd.DataFrame(temp3.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp3['year'] = yr
+    c_sda_mean3 = c_sda_mean3.append(temp3.fillna(0))
+    
+    temp4 = cp.copy(sda4[yr])
+    temp4['total'] = temp4.loc['SDA_0', 'total']
+    temp4 = pd.DataFrame(temp4.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+    temp4['year'] = yr
+    c_sda_mean4 = c_sda_mean4.append(temp4.fillna(0))
+    
+# Comsumption 12 SDA anne edit
+
+# Structure - UK industry emission intensities, deflated (1x112) * d_d section of Leontief inverse, deflated (112x112) * UK domestic final demand, deflated (112x1)
+# Structure - UK industry emission intensities, deflated (1x112) * d_i section of Leontief inverse, deflated (112x1562) * UK row demand, deflated (1562x1)
+# Structure - RoW industry emission intensities, deflated (1x1568) * i_d  section of Leontief inverse, deflated (1562x112) * UK domestic  final demand, deflated (112x1)
+# Structure - RoW industrty emission intensities, deflated (1x1568) * i_i section of Leontief inverse, deflated (1562x1562) * UK row final demand, deflated (1562x1)
+
+# load meta data from [UKMRIO]
+meta = pickle.load(open(outputs_filepath + 'results_2024/meta.p', "rb" ))
+   
+ukmrio = {}; #means = {}
+for data in ['ghg', 'uk_ghg_direct', 'S', 'U', 'Y']:
+    ukmrio[data] = pickle.load(open(outputs_filepath + 'results_2024/' + data + '.p', "rb" ))
+   
+ # create year lists
+years = list(hhd_ghg.keys())
+
+deflator_filepath = wd + 'data/raw/ONS/ONS deflators/'
+S_d, U_d, Y_d = bof.import_deflated_MRIO(deflator_filepath,ukmrio,years) 
+eL_d = {}
+Y_d_12 = {}
+for yr in years:
+    temp = np.zeros((1680,12))
+    Z = bem.make_Z_from_S_U(S_d[yr], U_d[yr])
+    bigY = np.zeros(shape = [np.size(Y_d[yr], 0)*2, np.size(Y_d[yr], 1)])
+    bigY[np.size(Y_d[yr], 0):np.size(Y_d[yr], 0)*2, 0:] = Y_d[yr] 
+    x_d = bem.make_x(Z, bigY)
+    L_d = bem.make_L(Z, x_d)
+    bigstressor = np.zeros(shape = [np.size(Y_d[yr], 0)*2, 1])
+    bigstressor[0:np.size(Y_d[yr], 0), :] = ukmrio['ghg'][yr]
+    e = np.diag(np.sum(bigstressor, 1)/x_d)
+    eL_d[yr] = np.dot(e, L_d)    
+    temp[:,0]  = np.sum(Y_d[yr].iloc[:,0:2],1) 
+    temp[:,1]  = np.sum(Y_d[yr].iloc[:,2:5],1) 
+    temp[:,2]  = np.sum(Y_d[yr].iloc[:,5:7],1) 
+    temp[:,3]  = np.sum(Y_d[yr].iloc[:,7:12],1) 
+    temp[:,4]  = np.sum(Y_d[yr].iloc[:,12:18],1) 
+    temp[:,5]  = np.sum(Y_d[yr].iloc[:,18:21],1) 
+    temp[:,6]  = np.sum(Y_d[yr].iloc[:,21:24],1) 
+    temp[:,7]  = np.sum(Y_d[yr].iloc[:,24:27],1) 
+    temp[:,8]  = np.sum(Y_d[yr].iloc[:,27:33],1) 
+    temp[:,9]  = np.sum(Y_d[yr].iloc[:,33:34],1) 
+    temp[:,10]  = np.sum(Y_d[yr].iloc[:,34:35],1) 
+    temp[:,11]  = np.sum(Y_d[yr].iloc[:,35:36],1) 
+    Y_d_12[yr] = temp  
+    
+# make SDA variables
+sda_vars1_c = {}
+sda_vars2_c = {}
+sda_vars3_c = {}
+sda_vars4_c = {}
+for yr in years:
+    sda_vars1 = {}
+    sda_vars2 = {}
+    sda_vars3 = {}
+    sda_vars4 = {}
+    for c in range(0,12):   
+        temp1 = {}
+        temp2 = {}
+        temp3 = {}
+        temp4 = {}
+        # emission intensities, deflated (1x112)
+        temp1['domestic_domestic_emissions_deflated'] = np.sum(np.array(eL_d[yr][0:112, 1680:1792]),0)
+        # domestic final demand, deflated (112x1)
+        temp1['domestic_final_demand'] = np.array(Y_d_12[yr][0:112,c])
+        # emission intensities, deflated (1x112)
+        temp2['domestic_row_emissions_deflated'] = np.sum(np.array(eL_d[yr][0:112, 1792:3360]),0)
+        # domestic final demand, deflated (112x1)
+        temp2['domestic_final_demand_of_row'] = np.array(Y_d_12[yr][112:1680,c])
+        # emission intensities, deflated (1x112)
+        temp3['row_domestic_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1680:1792]),0)
+        # row final demand, deflated (1680x1)
+        temp3['domestic_final_demand'] = np.array(Y_d_12[yr][0:112,c])
+        # emission intensities, deflated (1x112)
+        temp4['row_row_emissions_deflated'] = np.sum(np.array(eL_d[yr][112:1680, 1792:3360]),0)
+        # row final demand, deflated (1680x1)
+        temp4['domestic_final_demand_of_row'] = np.array(Y_d_12[yr][112:1680,c])
+        
+        sda_order1 = list(temp1.keys())
+        sda_order2 = list(temp2.keys())
+        sda_order3 = list(temp3.keys())
+        sda_order4 = list(temp4.keys())
+        
+        # format to match function
+        sda_vars1[c] = {}
+        sda_vars2[c] = {}
+        sda_vars3[c] = {}
+        sda_vars4[c] = {}
+        for i in range(len(sda_order1)):
+            sda_vars1[c][i] = temp1[sda_order1[i]]
+            sda_vars2[c][i] = temp2[sda_order2[i]]
+            sda_vars3[c][i] = temp3[sda_order3[i]]
+            sda_vars4[c][i] = temp4[sda_order4[i]]
+    sda_vars1_c[yr] = sda_vars1
+    sda_vars2_c[yr] = sda_vars2
+    sda_vars3_c[yr] = sda_vars3
+    sda_vars4_c[yr] = sda_vars4
+    
+# Run Analysis 
+sda1_c = {}
+sda2_c = {}
+sda3_c = {}
+sda4_c = {}  
+for c in range (0,12):
+    sda1 = {}
+    sda2 = {}
+    sda3 = {}
+    sda4 = {}
+    for yr in years:
+        sda_0, sda_1 = sda_vars1_c[2001][c], sda_vars1_c[yr][c]
+        sda1[yr] = bof.sda(sda_1, sda_0)
+        sda1[yr].columns = ['total'] + sda_order1
+        
+        sda_2, sda_3 = sda_vars2_c[2001][c], sda_vars2_c[yr][c]
+        sda2[yr] = bof.sda(sda_3, sda_2)
+        sda2[yr].columns = ['total'] + sda_order2
+        
+        sda_4, sda_5 = sda_vars3_c[2001][c], sda_vars3_c[yr][c]
+        sda3[yr] = bof.sda(sda_5, sda_4)
+        sda3[yr].columns = ['total'] + sda_order3
+        
+        sda_6, sda_7 = sda_vars4_c[2001][c], sda_vars4_c[yr][c]
+        sda4[yr] = bof.sda(sda_7, sda_6)
+        sda4[yr].columns = ['total'] + sda_order4
+    sda1_c[c] = sda1
+    sda2_c[c] = sda2
+    sda3_c[c] = sda3
+    sda4_c[c] = sda4
+
+# make summary table
+
+c_sda_mean1_c = {}
+c_sda_mean2_c = {}
+c_sda_mean3_c = {}
+c_sda_mean4_c = {}
+
+for c in range(0,12):
+    c_sda_mean1 = pd.DataFrame()
+    c_sda_mean2 = pd.DataFrame()
+    c_sda_mean3 = pd.DataFrame()
+    c_sda_mean4 = pd.DataFrame()
+    for yr in list(sda1.keys()):
+        temp1 = cp.copy(sda1_c[c][yr])
+        temp1['total'] = temp1.loc['SDA_0', 'total']
+        temp1 = pd.DataFrame(temp1.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp1['year'] = yr
+        c_sda_mean1 = c_sda_mean1.append(temp1.fillna(0))
+        
+        temp2 = cp.copy(sda2_c[c][yr])
+        temp2['total'] = temp2.loc['SDA_0', 'total']
+        temp2 = pd.DataFrame(temp2.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp2['year'] = yr
+        c_sda_mean2 = c_sda_mean2.append(temp2.fillna(0))
+        
+        temp3 = cp.copy(sda3_c[c][yr])
+        temp3['total'] = temp3.loc['SDA_0', 'total']
+        temp3 = pd.DataFrame(temp3.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp3['year'] = yr
+        c_sda_mean3 = c_sda_mean3.append(temp3.fillna(0))
+        
+        temp4 = cp.copy(sda4_c[c][yr])
+        temp4['total'] = temp4.loc['SDA_0', 'total']
+        temp4 = pd.DataFrame(temp4.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
+        temp4['year'] = yr
+        c_sda_mean4 = c_sda_mean4.append(temp4.fillna(0))
+    c_sda_mean1_c[c] = c_sda_mean1
+    c_sda_mean2_c[c] = c_sda_mean2
+    c_sda_mean3_c[c] = c_sda_mean3
+    c_sda_mean4_c[c] = c_sda_mean4
+
 #############################
 ## Carbon multiplier index ##
 #############################
@@ -309,6 +871,8 @@ for item in ccp_list:
 ##############
 
 equ_hhd.to_csv(outputs_filepath + 'basket_2024/equivalised_household.csv')
+equ_hhd_dom.to_csv(outputs_filepath + 'basket_2024/equivalised_household_domestic.csv')
+equ_hhd_imp.to_csv(outputs_filepath + 'basket_2024/equivalised_household_imports.csv')
 cm_index.to_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv')
 basket_change.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv')
 basket_change_3y.to_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv')

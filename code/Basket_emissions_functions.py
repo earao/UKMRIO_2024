@@ -239,6 +239,30 @@ def makefoot(S, U, Y, stressor, years):
 
     return footbyCOICOP
 
+def makefootCOICOPbysource(S, U, Y, stressor, years):
+    footbyCOICOPdom = {}
+    footbyCOICOPimp = {}
+    for yr in years:
+        temp_d = np.zeros(shape = np.size(Y[yr], 1))
+        temp_i = np.zeros(shape = np.size(Y[yr], 1))
+        Z = make_Z_from_S_U(S[yr], U[yr]) 
+        bigY = np.zeros(shape = [np.size(Y[yr], 0)*2, np.size(Y[yr], 1)])
+        bigY[np.size(Y[yr], 0):np.size(Y[yr], 0)*2, 0:] = Y[yr]     
+        x = make_x(Z, bigY)
+        L = make_L(Z, x)
+        bigstressor = np.zeros(shape = [np.size(Y[yr], 0)*2, 1])
+        bigstressor[0:np.size(Y[yr], 0), :] = stressor[yr]
+        e = np.diag(np.sum(bigstressor, 1)/x)
+        eL = np.dot(e, L)
+        for a in range(np.size(Y[yr], 1)):
+            temp = np.dot(eL, bigY[:, a])
+            temp_d[a] = np.sum(temp[0:112])
+            temp_i[a] = np.sum(temp[112:])
+        footbyCOICOPdom[yr] = temp_d 
+        footbyCOICOPimp[yr] = temp_i
+
+    return (footbyCOICOPdom, footbyCOICOPimp)
+
 ###########
 # Run all #
 ###########
@@ -290,11 +314,15 @@ def make_footprint(hhdspend, wd, concs_filepath):
 
     COICOP_ghg = makefoot(ukmrio['S'], ukmrio['U'], newY, ukmrio['ghg'], list(hhdspend.keys()))
     
-    Total_ghg = {}; multipliers = {}
+    COICOP_ghg_dom, COICOP_ghg_imp = makefootCOICOPbysource(ukmrio['S'], ukmrio['U'], newY, ukmrio['ghg'], list(hhdspend.keys()))
+    
+    Total_ghg = {}; Domestic_ghg = {}; Imports_ghg = {}; multipliers = {}
     for year in list(hhdspend.keys()):
         # add index
         new_index = concs_dict['456_to_105'].columns.tolist() + ukmrio['Y'][year].loc[:, '13 Non-profit instns serving households':].columns.tolist()
         COICOP_ghg[year] = df(COICOP_ghg[year], index=new_index, columns=['total_ghg'])
+        COICOP_ghg_dom[year] = df(COICOP_ghg_dom[year], index=new_index, columns=['domestic_ghg'])
+        COICOP_ghg_imp[year] = df(COICOP_ghg_imp[year], index=new_index, columns=['imports_ghg'])
         # add direct emissions
         for item in new_index:
             if '4.5.2' in item:
@@ -303,6 +331,8 @@ def make_footprint(hhdspend, wd, concs_filepath):
                 travel_direct = item
         COICOP_ghg[year].loc[gas_direct, 'total_ghg'] += ukmrio['uk_ghg_direct'][year]['Consumer expenditure - not travel']
         COICOP_ghg[year].loc[travel_direct, 'total_ghg'] += ukmrio['uk_ghg_direct'][year]['Consumer expenditure - travel']
+        COICOP_ghg_dom[year].loc[gas_direct, 'domestic_ghg'] += ukmrio['uk_ghg_direct'][year]['Consumer expenditure - not travel']
+        COICOP_ghg_dom[year].loc[travel_direct, 'domestic_ghg'] += ukmrio['uk_ghg_direct'][year]['Consumer expenditure - travel']
         
         # multipliers tCO2e/GBP 
         multipliers[year] = COICOP_ghg[year].join(df(ylcfs_total[year], columns=['total_spend']), how='right')
@@ -312,6 +342,12 @@ def make_footprint(hhdspend, wd, concs_filepath):
         temp = ylcf_props[year].T.apply(lambda x: x*COICOP_ghg[year]['total_ghg'])
         Total_ghg[year] = temp.T[ylcf_props[year].columns.tolist()]
         
+        temp = ylcf_props[year].T.apply(lambda x: x*COICOP_ghg_dom[year]['domestic_ghg'])
+        Domestic_ghg[year] = temp.T[ylcf_props[year].columns.tolist()]
+        
+        temp = ylcf_props[year].T.apply(lambda x: x*COICOP_ghg_imp[year]['imports_ghg'])
+        Imports_ghg[year] = temp.T[ylcf_props[year].columns.tolist()]
+        
         print('Emissions calculated for ' + str(year))
     
-    return(Total_ghg, multipliers, yhh_wide)
+    return(Total_ghg, Domestic_ghg, Imports_ghg, multipliers, yhh_wide)
