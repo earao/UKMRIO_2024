@@ -17,6 +17,8 @@ import pickle
 import copy as cp
 import numpy as np
 import Basket_outputs_functions as bof
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 # set working directory
 # make different path depending on operating system
@@ -279,6 +281,27 @@ defl_cm = defl_cm.drop(temp.columns.tolist()).append(temp.T).loc[order]
 
 # adjust base year to 100%
 cm_index = defl_cm.apply(lambda x: x/defl_cm[cm_base_year]*100)
+
+# plot for presentation
+plot_data = pd.DataFrame(multipliers_all.apply(lambda x: x/multipliers_all[cm_base_year]*100).stack())\
+    .rename(columns={0:'Original'}).join(pd.DataFrame(cm_index.stack()).rename(columns={0:'Deflated (CM Index)'}))\
+        .stack().reset_index().rename(columns={'level_0':'ccp3', 'level_1':'Year', 'level_2':'Type', 0:'Multiplier value rescaled (2015 = 100)'})
+
+
+ccp_list = ['7.2.2 Fuels and lubricants for personal transport equipment', '4.5.1 Electricity'] 
+            #'7.3.1_2 Passenger transport by railway and road', '4.5.2 Gas', 
+
+from matplotlib.ticker import MaxNLocator
+for item in ccp_list:
+    temp = plot_data.loc[plot_data['ccp3'] == item]
+    ax = plt.figure().gca()
+    sns.lineplot(data=temp, x='Year', y='Multiplier value rescaled (2015 = 100)', hue='Type')
+    plt.title(item)
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    plt.axhline(100, c='k', linestyle=':')
+    plt.savefig(outputs_filepath + 'basket_2024/plots/cm_index_plot_' + item  + '.png', bbox_inches='tight')
+    plt.show()
+
 
 
 ##############

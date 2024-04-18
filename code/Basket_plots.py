@@ -22,29 +22,45 @@ else:
 # define filepaths
 outputs_filepath = wd + 'outputs/'
 plots_filepath = outputs_filepath + 'basket_2024/plots/'
+processed_data_filepath = wd + 'data/processed/Basket_data/'
 
 cpi_base_year = 2010
 years = list(range(2001, 2022))
 
 # load data
 equ_hhd = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household.csv', index_col=0).drop(['total_ghg'], axis=1)
+equ_hhd_source = pd.read_csv(processed_data_filepath + 'compare_2001_2021_imports_domestic.csv', index_col=0)
 cm_index = pd.read_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv', index_col=0)
 basket_change = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv', index_col=0, header=[0, 1])
 basket_change_3y = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv', index_col=0, header=[0, 1])
 sda = pd.read_csv(outputs_filepath + 'basket_2024/SDA_mean.csv')
 
-
 # Change to coicop 1
-ccp1_dict = {1: 'Food and non-alcoholic beverages', 2: 'Alcoholic beverages, tobacco and narcotics',
-             3: 'Clothing and footwear', 4: 'Housing, water, electricity, gas and other fuels',
-             5: 'Furnishings, household equipment and routine household maintenance', 6: 'Health', 7: 'Transport',
-             8: 'Information and communication', 9: 'Recreation, sport and culture', 10: 'Education services',
-             11: 'Restaurants and accommodation services', 12: 'Miscellaneous'}
+ccp1_dict = {1: 'Food', 2: 'Alcohol & tobacco',
+             3: 'Clothing', 4: 'Housing',
+             5: 'Furnishings', 6: 'Health', 7: 'Transport',
+             8: 'Info & comms', 9: 'Recreation etc', 10: 'Education',
+             11: 'Restaurants & hotels', 12: 'Miscellaneous'}
 
 equ_hhd.columns = [int(x.split('.')[0]) for x in equ_hhd.columns]
 equ_hhd = equ_hhd.sum(axis=1, level=0).rename(columns=ccp1_dict)
 
 cm_index.index = pd.MultiIndex.from_arrays([[ccp1_dict[int(x.split('.')[0])] for x in cm_index.index], cm_index.index.tolist()])
+
+# clean equ_hhd_source
+equ_hhd_source['Product'] = [x.split(' two-adult')[0] for x in equ_hhd_source.index]
+equ_hhd_source['Product'] = equ_hhd_source['Product'].str.replace('Recreation', 'Recreation etc').str.replace('etc etc', 'etc')
+equ_hhd_source['Emissions'] = [x.split('two-adult ')[-1].replace('hhold ', '').replace('(', '').replace(')', '') for x in equ_hhd_source.index]
+equ_hhd_source = equ_hhd_source.set_index(['Product', 'Emissions', 'Percentage change']).stack().reset_index()\
+    .rename(columns={0:'Emissions (tCO2e)', 'level_3':'Year'})
+equ_hhd_source.loc[equ_hhd_source['Emissions'].isin(['domestic', 'imports']) == False, 'Emissions'] = 'total'
+equ_hhd_source['Year'] = [x.split('in ')[-1].split(' (')[0] for x in equ_hhd_source['Year']]
+
+check = equ_hhd_source.set_index(['Product', 'Emissions', 'Year']).unstack(['Emissions', 'Year'])
+
+equ_hhd_source_pct = equ_hhd_source.set_index(['Product', 'Emissions', 'Year'])[['Percentage change']].unstack('Emissions')
+equ_hhd_source_pct = equ_hhd_source_pct.reset_index()
+
 
 # fix years
 equ_hhd.index = [int(x) for x in equ_hhd.index]
@@ -54,9 +70,25 @@ equ_hhd.index = [int(x) for x in equ_hhd.index]
 ###########
 
 # equivalised household
+
+# total
 equ_hhd.plot(kind='bar', stacked=True); plt.legend(bbox_to_anchor=(1,1)); 
 #plt.title('Equivalised household emissions'); 
 plt.ylabel('tCO2e'); plt.savefig(plots_filepath + 'Equ_hhlds.png', dpi=200, bbox_inches='tight')
+plt.show();
+
+# imports vs domestic
+fig, axs = plt.subplots(ncols=2, sharey=True, figsize=(10, 5), sharex=True)
+for i in range(2):
+    co2 = ['domestic', 'imports'][i]
+    temp = equ_hhd_source.loc[equ_hhd_source['Emissions'] == co2]
+    sns.barplot(ax=axs[i], data=temp, y='Product', x='Emissions (tCO2e)', hue='Year')
+    axs[i].set_title(co2.capitalize())
+    axs[i].set_ylabel('')
+    axs[i].legend(loc='lower right')
+plt.tight_layout()
+plt.savefig(plots_filepath + 'Equ_hhlds_source.png', dpi=200, bbox_inches='tight')
+plt.show()
 
 
 # carbon multipler index
@@ -111,7 +143,7 @@ for item in list(ccp1_dict.values()):
 
 
 # SDA
-sda.set_index('year').drop(['total', 'Unnamed: 0'], axis=1).plot(kind='bar', stacked=True);plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
+sda.set_index('year').drop(['total', 'Unnamed: 0'], axis=1).plot(kind='bar', stacked=True); plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
 plt.savefig(plots_filepath + 'SDA_mean_bar.png', dpi=200, bbox_inches='tight')
 
 sda.set_index('year').drop(['total', 'Unnamed: 0'], axis=1).plot();plt.legend(bbox_to_anchor=(1,1)); plt.axhline(0, c='k'); 
