@@ -30,6 +30,8 @@ years = list(range(2001, 2022))
 # load data
 equ_hhd = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household.csv', index_col=0).drop(['total_ghg'], axis=1)
 equ_hhd_source = pd.read_csv(processed_data_filepath + 'compare_2001_2021_imports_domestic.csv', index_col=0)
+equ_hhd_dom = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household_domestic.csv', index_col=0).drop(['total_ghg'], axis=1)
+equ_hhd_imp = pd.read_csv(outputs_filepath + 'basket_2024/equivalised_household_imports.csv', index_col=0).drop(['total_ghg'], axis=1)
 cm_index = pd.read_csv(outputs_filepath + 'basket_2024/carbon_multiplier_index.csv', index_col=0)
 basket_change = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change.csv', index_col=0, header=[0, 1])
 basket_change_3y = pd.read_csv(outputs_filepath + 'basket_2024/basket_items_ghg_change_3yr_avg.csv', index_col=0, header=[0, 1])
