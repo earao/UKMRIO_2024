@@ -123,7 +123,7 @@ uk_foot = {}
 uk_foot['ghg'] = uk.footprint(ghg,U,S,Y,yrs,meta)
 
 #make water stressors
-(watgrn_cons,watblu_cons,watblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct) = water.make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath)
+(watgrn_cons,watblu_cons,watblu_wdrl,uk_wat_blu_cons_direct,uk_wat_blu_wdrl_direct) = water.make_exio382_wat(use,exioyrs,meta,c_conc,i_conc,exiobase_filepath,yrs)
 
 #make energy stressor
 (iea_fe_data,aviation,shipping) = energy.make_IEA_data(iea_filepath)
