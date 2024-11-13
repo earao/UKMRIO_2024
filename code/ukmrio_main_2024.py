@@ -172,7 +172,7 @@ for data in ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct'
     
 # save others
 item_list = ['S', 'U', 'Y', 'co2', 'uk_co2_direct', 'ghg', 'mat', 'bio', 'ore', 'nmm', 'ffl', 
-             'WATgrn_cons', 'WATblu_cons', 'WATblu_wdrl', 'nrg', 'uk_nrg_direct']
+             'watgrn_cons', 'watblu_cons', 'watblu_wdrl', 'nrg', 'uk_nrg_direct']
 
 for data in item_list:
     stressor_writer = pd.ExcelWriter(inputs_filepath + data + '.xlsx')
@@ -180,13 +180,16 @@ for data in item_list:
     for yr in yrs:
         temp[yr].to_excel(stressor_writer, str(yr))
     stressor_writer.save() 
+    print(data)
 
 # save as pickle file
 for data in item_list[:3]:
     pickle.dump(eval(data), open(results_filepath + data + ".p", "wb" ) )
+    print(data)
     
 for data in item_list[3:] + ['uk_ghg_direct', 'uk_wat_blu_wdrl_direct', 'uk_wat_blu_cons_direct']:
     pickle.dump(eval(data), open(results_filepath + data.lower() + ".p", "wb" ) )
+    print(data)
 
 
 # save meta
