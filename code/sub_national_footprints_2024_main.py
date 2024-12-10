@@ -16,6 +16,7 @@ import LCF_functions as lcf
 import pickle
 import defra_functions as defra
 import census_functions as cs
+import ukmrio_functions as uk
 import copy
 from sys import platform
 
@@ -70,7 +71,8 @@ coicop_exp_tot3 = lcf.make_balanced_totals(coicop_exp_tot2,total_Yhh_109,concs_d
 yhh_wide = lcf.make_y_hh_105(Y,coicop_exp_tot3,years,concs_dict,meta)
 newY = lcf.make_new_Y_105(Y,yhh_wide,years)
 
-# (io_deflators,cc_deflators) = uk.get_deflator_data_2023(deflator_filepath) not needed here
+(io_deflators,cc_deflators) = uk.get_deflator_data(deflator_filepath)
+cc_deflators = np.transpose(cc_deflators.loc[years,:])
 
 hhspenddata3 = lcf.convert_hhspend_sizes(hhspenddata2,concs_dict,years,'456_to_105')
 
@@ -109,20 +111,20 @@ for region in regions_lc:
 defra_ghg_reg = {}
 for country in ['England', 'Scotland', 'Wales', 'Northern Ireland']:
     y_country = eval('y_' + country.replace('Northern ', 'N_'))
-    defra_ghg_reg[country] = defra.makeregionresults(S,U,Y,newY,y_country,meta,ghg,defra_ghg_uk['direct'],'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,country)
+    defra_ghg_reg[country] = defra.makeregionresults(S,U,Y,newY,y_country,meta,ghg,defra_ghg_uk['direct'],'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,country,cc_deflators)
 
 reg_england = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West']
 for reg in reg_england:
     reg_lower = reg.replace(' and The Humber', '').replace(' ', '_').lower()
     defra_ghg_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,ghg,defra_ghg_uk['direct'],
-                                                           'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg)
+                                                           'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,reg,cc_deflators)
     
 defra_ghg_reg['Wales'] = defra.makeregionresults(S,U,Y,newY,y_regional['wales'],meta,ghg,defra_ghg_uk['direct'],
-                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Wales')
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Wales',cc_deflators)
 defra_ghg_reg['Northern Ireland'] = defra.makeregionresults(S,U,Y,newY,y_N_Ireland,meta,ghg,defra_ghg_uk['direct'],
-                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Northern Ireland')
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Northern Ireland',cc_deflators)
 defra_ghg_reg['Scotland'] = defra.makeregionresults(S,U,Y,newY,y_regional['scotland'],meta,ghg,defra_ghg_uk['direct'],
-                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Scotland')
+                                                       'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Scotland',cc_deflators)
 
 file = os.path.join(census_filepath, 'laregionlookup2022.xlsx')   
 LAcodesnames = pd.read_excel(file, header = 4, index_col=0)
@@ -131,7 +133,7 @@ oac11_names = pd.read_excel(os.path.join(census_filepath, 'oac2011.xlsx'), sheet
 
 ghg_reg_las = {}; oac_lookup = {}
 for reg in reg_england + ['Scotland', 'Wales']:
-    ghg_reg_las[reg], oac_lookup[reg] = defra.makelaresults(defra_ghg_reg[reg],reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,reg,years,concs_dict)
+    ghg_reg_las[reg], oac_lookup[reg] = defra.makelaresults(defra_ghg_reg[reg],reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,reg,years,concs_dict,cc_deflators)
     
 for reg in reg_england:
     defra.printdefradata(reg,results_filepath,years,[defra_ghg_reg[reg]],['ghg'])
