@@ -51,9 +51,11 @@ meta = pickle.load( open(results_filepath + "meta.p", "rb" ) )
 ghg = pickle.load( open(results_filepath + "ghg.p", "rb" ) )
 uk_ghg_direct = pickle.load( open(results_filepath + "uk_ghg_direct.p", "rb" ) )
 
+co2 = pickle.load( open(results_filepath + "co2.p", "rb" ) )
+uk_co2_direct = pickle.load( open(results_filepath + "uk_co2_direct.p", "rb" ) )
+
 hhspenddata2 = copy.deepcopy(hhspenddata)
 hhspenddata2 = lcf.removeoutliers(hhspenddata2,years)
-
         
 concs_dict = pd.read_excel(os.path.join(inputs_filepath, 'ONS_to_COICOP_LCF_concs_2024.xlsx'), sheet_name=None, header = 0, index_col=0)
 
@@ -101,6 +103,7 @@ reglaspropyr = lcf.add_pop_factors(reglaspropyr,regpophholdsyr,newY,regions,year
 y_regions = lcf.make_y_regions(wd,hhspenddata3,regions,regpophholdsyr,newY,years)
 
 defra_ghg_uk = defra.makeukresults(wd,S,U,Y,newY,coicop_exp_tot2,meta,ghg,uk_ghg_direct,'ghg',allyears,years)
+defra_co2_uk = defra.makeukresults(wd,S,U,Y,newY,coicop_exp_tot2,meta,co2,uk_co2_direct,'co2',allyears,years)
 
 y_regional = {}
 for region in regions_lc:
@@ -126,6 +129,24 @@ defra_ghg_reg['Northern Ireland'] = defra.makeregionresults(S,U,Y,newY,y_N_Irela
 defra_ghg_reg['Scotland'] = defra.makeregionresults(S,U,Y,newY,y_regional['scotland'],meta,ghg,defra_ghg_uk['direct'],
                                                        'ghg',years,concs_dict,defra_ghg_uk['coicop_mult'],defra_ghg_uk['sic_mult'],regpophholdsyr,'Scotland',cc_deflators)
 
+defra_co2_reg = {}
+for country in ['England', 'Scotland', 'Wales', 'Northern Ireland']:
+    y_country = eval('y_' + country.replace('Northern ', 'N_'))
+    defra_co2_reg[country] = defra.makeregionresults(S,U,Y,newY,y_country,meta,co2,defra_co2_uk['direct'],'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,country,cc_deflators)
+
+reg_england = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West']
+for reg in reg_england:
+    reg_lower = reg.replace(' and The Humber', '').replace(' ', '_').lower()
+    defra_co2_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,co2,defra_co2_reg['direct'],
+                                                           'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_reg['sic_mult'],regpophholdsyr,reg,cc_deflators)
+    
+defra_co2_reg['Wales'] = defra.makeregionresults(S,U,Y,newY,y_regional['wales'],meta,co2,defra_co2_uk['direct'],
+                                                       'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,'Wales',cc_deflators)
+defra_co2_reg['Northern Ireland'] = defra.makeregionresults(S,U,Y,newY,y_N_Ireland,meta,co2,defra_co2_uk['direct'],
+                                                       'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,'Northern Ireland',cc_deflators)
+defra_co2_reg['Scotland'] = defra.makeregionresults(S,U,Y,newY,y_regional['scotland'],meta,co2,defra_ghg_uk['direct'],
+                                                       'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,'Scotland',cc_deflators)
+
 file = os.path.join(census_filepath, 'laregionlookup2022.xlsx')   
 LAcodesnames = pd.read_excel(file, header = 4, index_col=0)
 oac01_names = pd.read_excel(os.path.join(census_filepath, 'oac2001.xlsx'), sheet_name=None, index_col = 0)
@@ -141,6 +162,17 @@ for reg in reg_england:
 for reg in list(ghg_reg_las.keys()):
     for la in ghg_reg_las[reg]:
         defra.printdefradata2(la,results_filepath,years,ghg_reg_las[reg][la],'ghg')
+        
+co2_reg_las = {}; oac_lookup = {}
+for reg in reg_england + ['Scotland', 'Wales']:
+    co2_reg_las[reg], oac_lookup[reg] = defra.makelaresults(defra_co2_reg[reg],reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,reg,years,concs_dict,cc_deflators)
+    
+for reg in reg_england:
+    defra.printdefradata(reg,results_filepath,years,[defra_co2_reg[reg]],['co2'])
+
+for reg in list(ghg_reg_las.keys()):
+    for la in ghg_reg_las[reg]:
+        defra.printdefradata2(la,results_filepath,years,co2_reg_las[reg][la],'co2')
 
 # formula = 'defra.regioncheck2023('
 # for reg in reg_england + ['Scotland', 'Wales', 'Northern Ireland']:
@@ -150,6 +182,7 @@ for reg in list(ghg_reg_las.keys()):
 # region_results_check = eval(formula)
 
 region_results_check = defra.regioncheck(defra_ghg_reg,years)
+region_results_check2 = defra.regioncheck(defra_co2_reg,years)
 
 defrawriter = os.path.join(results_filepath, 'Region Mastersheet.xlsx')
 writer = pd.ExcelWriter(defrawriter)
@@ -162,6 +195,10 @@ writer.save()
 la_results_check = {}
 for reg in reg_england + ['Scotland', 'Wales']:
     la_results_check[reg] = defra.lacheck(defra_ghg_reg[reg],ghg_reg_las[reg],years)
+    
+la_results_check2 = {}
+for reg in reg_england + ['Scotland', 'Wales']:
+    la_results_check2[reg] = defra.lacheck(defra_co2_reg[reg],co2_reg_las[reg],years)
     
     
 for reg in reg_england + ['Scotland', 'Wales']:
