@@ -67,6 +67,14 @@ def make_L(Z,x):
 
     return L
 
+def make_A(Z,x):
+    
+    bigX = np.zeros(shape = (len(Z)))    
+    bigX = np.tile(np.transpose(x),(len(Z),1))
+    A = np.divide(Z,bigX)    
+
+    return A
+
 def make_e(stressor,x):
     
     e = np.zeros(shape = (1,np.size(x)))
