@@ -137,8 +137,8 @@ for country in ['England', 'Scotland', 'Wales', 'Northern Ireland']:
 reg_england = ['North East','North West','Yorkshire and The Humber','East Midlands','West Midlands','East','London','South East','South West']
 for reg in reg_england:
     reg_lower = reg.replace(' and The Humber', '').replace(' ', '_').lower()
-    defra_co2_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,co2,defra_co2_reg['direct'],
-                                                           'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_reg['sic_mult'],regpophholdsyr,reg,cc_deflators)
+    defra_co2_reg[reg] = defra.makeregionresults(S,U,Y,newY,y_regional[reg_lower],meta,co2,defra_co2_uk['direct'],
+                                                           'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,reg,cc_deflators)
     
 defra_co2_reg['Wales'] = defra.makeregionresults(S,U,Y,newY,y_regional['wales'],meta,co2,defra_co2_uk['direct'],
                                                        'co2',years,concs_dict,defra_co2_uk['coicop_mult'],defra_co2_uk['sic_mult'],regpophholdsyr,'Wales',cc_deflators)
@@ -171,7 +171,7 @@ for reg in reg_england:
     defra.printdefradata(reg,results_filepath,years,[defra_co2_reg[reg]],['co2'])
 
 for reg in list(ghg_reg_las.keys()):
-    for la in ghg_reg_las[reg]:
+    for la in co2_reg_las[reg]:
         defra.printdefradata2(la,results_filepath,years,co2_reg_las[reg][la],'co2')
 
 # formula = 'defra.regioncheck2023('
