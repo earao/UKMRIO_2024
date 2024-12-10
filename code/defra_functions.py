@@ -166,7 +166,7 @@ def printdefradata(region,results_filepath,years,results,indicator):
 # makeukresults2023
 # printdefradata
 
-def makeregionresults(S,U,Y,newY,Yregion,meta,stressor,direct,indicator,years,concs_dict,coicop_mult,sic_mult,regpophholdsyr,Region_Name):
+def makeregionresults(S,U,Y,newY,Yregion,meta,stressor,direct,indicator,years,concs_dict,coicop_mult,sic_mult,regpophholdsyr,Region_Name,cc_deflators):
     defra_foot = {}
     tempregagg = np.zeros((meta['fd']['len_idx'],meta['reg']['len'])) 
     tempsecagg = np.zeros((meta['fd']['len_idx'],meta['sup_dd']['len_idx']))
@@ -206,17 +206,18 @@ def makeregionresults(S,U,Y,newY,Yregion,meta,stressor,direct,indicator,years,co
         eL_vector = np.dot(e,L)
         eL = np.dot(np.diag(e),L)
         reg = np.zeros((meta['reg']['len'],111))
-        ind = np.zeros((meta['sup_dd']['len_idx'],111))
+        src = np.zeros((meta['sup_dd']['len_idx'],111))
         
         for ysec in range (0,np.size(Yregion[yr],1)-1):
             reg[:,ysec] = np.dot(np.dot(eL,bigYregion[:,ysec]),regagg)
-            ind[:,ysec] = np.dot(np.dot(eL,bigYregion[:,ysec]),secagg)
+            src[:,ysec] = np.dot(np.dot(eL,bigYregion[:,ysec]),secagg)
             coicop[ysec,i] = np.dot(eL_vector,bigYregion[:,ysec])
         
         ccc = np.dot(eL,np.diag(np.sum(bigYregion[:,0:-1],1)))
         ccc = np.dot(np.transpose(secagg),(np.dot(ccc,prdagg))) 
         
         defra_foot[str(yr)+'_reg'] = df(reg, index = meta['reg']['idx'], columns = Yregion[yr].columns[0:np.size(Yregion[yr],1)-1])
+        defra_foot[str(yr)+'_src'] = df(src, index = meta['sectors']['ind'], columns = Yregion[yr].columns[0:np.size(Yregion[yr],1)-1])
         defra_foot[str(yr)+'_sic'] = df(ccc, index = meta['sectors']['ind'], columns = meta['sectors']['prd'])
        
         if indicator == 'ghg':
@@ -276,6 +277,8 @@ def makeregionresults(S,U,Y,newY,Yregion,meta,stressor,direct,indicator,years,co
     defra_foot['direct'] = df(drct, index = direct.index, columns = years)
     defra_foot['coicop'] = df(coicop, index = Yregion[yr].columns[0:np.size(Yregion[yr],1)-1], columns = years)
     defra_foot['coicop_mult'] = coicop_mult
+    defra_foot['coicop_mult_2015_constant'] = coicop_mult/cc_deflators
+    defra_foot['coicop_spend_2015_constant'] = coicop/coicop_mult*cc_deflators
     defra_foot['sic_mult'] = sic_mult
     defra_foot['population'] = df(pop, index = ['United Kingdom',Region_Name],columns = years)        
        
@@ -357,7 +360,7 @@ def regioncheck(defra_ghg_reg,years):
 ##################
 
 
-def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict):
+def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,regoacsyr,oacyrmeta,oacyrspends,oac01_names,oac11_names,Region_Name,years,concs_dict,cc_deflators):
     la_foot = {}
     oac_lookup = {}
     la_names = reglaspropyr[2020][Region_Name].index
@@ -372,8 +375,10 @@ def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,r
         for n, yr in enumerate(years):
             coicopprop = reglaspropyr[yr][Region_Name].loc[la].values  
             reg = defra_region_result[str(yr)+'_reg']*coicopprop
+            src = defra_region_result[str(yr)+'_src']*coicopprop
             coicop[:,n] = defra_region_result['coicop'].loc[:,yr]*coicopprop
             la_foot_temp[str(yr)+'_reg'] = df(reg, columns = defra_region_result[str(yr)+'_reg'].columns, index = defra_region_result[str(yr)+'_reg'].index)
+            la_foot_temp[str(yr)+'_src'] = df(src, columns = defra_region_result[str(yr)+'_src'].columns, index = defra_region_result[str(yr)+'_src'].index)
             drct[0,n] = defra_region_result['direct'].loc['Consumer expenditure gas',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.2 Gas')]]
             drct[1,n] = defra_region_result['direct'].loc['Consumer expenditure liquid fuel',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.3 Liquid fuels')]]
             drct[2,n] = defra_region_result['direct'].loc['Consumer expenditure solid fuel',yr]*reglaspropyr[yr][Region_Name].loc[la,[('4.5.4 Solid fuels')]]
@@ -415,10 +420,11 @@ def makelaresults(defra_region_result,reglaspropyr,regpophholdsyr,LAcodesnames,r
             oac_lookup_temp[str(yr)+'oac'] = df(oac)
             
         la_foot_temp['coicop'] = df(coicop, index = defra_region_result['coicop'].iloc[0:111].index, columns = years)
+        la_foot_temp['coicop_spend'] = df(coicop/defra_region_result['coicop_mult'], index = defra_region_result['coicop'].iloc[0:111].index, columns = years)
+        la_foot_temp['coicop_mult_2015_constant'] = defra_region_result['coicop_mult']/cc_deflators
+        la_foot_temp['coicop_spend_2015_constant'] = coicop/defra_region_result['coicop_mult']*cc_deflators
         la_foot_temp['direct'] = df(drct, index = defra_region_result['direct'].index, columns = years)
         la_foot_temp['population'] = df(pop, index = ['United Kingdom',Region_Name,LAcodesnames.loc[la,'la_name']], columns = years)        
-        
-        
         
         la_foot[LAcodesnames.loc[la,'la_name']] = la_foot_temp
         oac_lookup[LAcodesnames.loc[la,'la_name']] = oac_lookup_temp
