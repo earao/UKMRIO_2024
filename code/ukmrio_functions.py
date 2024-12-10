@@ -712,7 +712,7 @@ def get_deflator_data(deflator_filepath): # used in defra_main_2023
     
     file = deflator_filepath + 'deflators_AO2024.xlsx'
     io = pd.read_excel(file, sheet_name='UK_domestic', index_col=0)
-    cc = pd.read_excel(file, sheet_name='COICOP')
+    cc = pd.read_excel(file, sheet_name='COICOP', index_col=0)
     
     io_deflators = 1/io*100
     cc_deflators = 1/cc*100
