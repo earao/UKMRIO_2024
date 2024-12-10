@@ -169,7 +169,7 @@ basket_change_3y = basket_change_3y.apply(lambda x: (x / basket_change_3y[(2015)
 # Structure: pop (1x1) * emission intensities, deflated (1x105) * prop spend from yhh (105x1) * total spend from yhh, deflated (1x1)
 
 years = list(hhd_ghg.keys())
-sda_base_year = 2015
+sda_base_year = 2001
 cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
 
 # population
@@ -243,98 +243,6 @@ for year in list(sda.keys()):
     temp['year'] = year
     sda_mean = sda_mean.append(temp.fillna(0))
 
- 
-# SDA by main COICOP
-# Structure: pop (1x1) * emission intensities, deflated (1x1)  * per cap spend from yhh on each COICOP, deflated (1x1)
-
-years = list(hhd_ghg.keys())
-sda_base_year = 2015
-cpi_sda = cpi.apply(lambda x: x / cpi[sda_base_year] * 100)
-
-# population
-population = pd.read_csv(data_filepath + 'raw/Population/series-281123.csv', index_col=0, header=7)
-population.columns = ['population']
-
-# get total spend to make other data (from yhh)
-spend = pickle.load(open(outputs_filepath + 'results_2024/SPEND_yhh.p', 'rb'))
-total_spend = bof.make_total(spend, years, idx_dict)
-
-# deflated total spend
-defl_spend = pd.DataFrame(index = total_spend.index)
-for year in years:
-    defl_spend[year] = total_spend[year] / (cpi_sda[year] / 100)
-
-# get deflated toal spend per year by COICOP 12
-defl_spend_by_COICOP12 = bof.make_COICOP12(defl_spend)
-
-# get toal emissions per year by COICOP 12
-temp = {year:hhd_ghg[year].apply(lambda x: pd.to_numeric(x, errors='coerce')*hhd_ghg[year]['weight'])[list(idx_dict.values())] 
-        for year in years}
-total_co2 = bof.make_total(temp, years, idx_dict)
-total_co2_by_COICOP12 = bof.make_COICOP12(total_co2, years, idx_dict)
-
-# deflated emissions intensity 
-defl_co2_per_unit_price = (total_co2_by_COICOP12 / (defl_spend_by_COICOP12)).astype(float)
-
-
-# deflated total spend per capita
-defl_spend_by_COICOP12_per_cap = pd.DataFrame(index = defl_spend_by_COICOP12.index)
-defl_spend_by_COICOP12_per_cap = defl_spend_by_COICOP12 / np.transpose(np.tile(population.loc[2001:2021],(1,12)))
-
-# make SDA variables
-sda_all = {}
-for c,coicop in enumerate(defl_spend_by_COICOP12.index):
-    sda_vars = {}
-    footprint = {}
-    
-    for year in years:
-        temp = {}
-        # pop (1x1)
-        temp['population'] = np.array(population.loc[year, 'population'])
-        # emission intensities, deflated (1x105)
-        temp['defl_spend_by_COICOP12_per_cap'] = np.array(defl_spend_by_COICOP12_per_cap.loc[coicop, year:year])
-        # prop spend from yhh (105x1)
-        temp['defl_co2_per_unit_price'] = np.array(defl_co2_per_unit_price.loc[coicop, year:year])
-        
-        sda_order = list(temp.keys())
-        
-        # emissions
-        foot = cp.copy(temp[sda_order[0]])
-        for item in sda_order[1:]:
-            foot = np.dot(foot, temp[item])
-        footprint[year] = foot
-        
-        # format to match function
-        sda_vars[year] = {}
-        for i in range(len(sda_order)):
-            sda_vars[year][i] = temp[sda_order[i]]
-        
-    sda_all[coicop] = sda_vars
-
-# Run Analysis   
-sda_a = {}
-for coicop in defl_spend_by_COICOP12.index:
-    sda = {}
-    for year in years:
-        sda_0, sda_1 = sda_all[coicop][2001], sda_all[coicop][year]
-        sda[year] = bof.sda(sda_1, sda_0)
-        sda[year].columns = ['total'] + sda_order
-        
-    sda_a[coicop] = sda
-    
-# make summary table
-
-sda_mean_all = {}
-for coicop in defl_spend_by_COICOP12.index:
-    sda_mean = pd.DataFrame()
-    for year in list(sda.keys()):
-        temp = cp.copy(sda_a[coicop][year])
-        temp['total'] = temp.loc['SDA_0', 'total']
-        temp = pd.DataFrame(temp.loc[['mean']].unstack()).T.swaplevel(axis=1).droplevel(axis=1, level=0)
-        temp['year'] = year
-        sda_mean = sda_mean.append(temp.fillna(0))
-    sda_mean_all[coicop] = sda_mean
-
 
 # Production SDA
 
@@ -404,21 +312,6 @@ for yr in years:
     sda_order2 = list(temp2.keys())
     sda_order3 = list(temp3.keys())
     sda_order4 = list(temp4.keys())
-    
-    # emissions
-    foot1 = cp.copy(temp[sda_order1[0]])
-    foot2 = cp.copy(temp[sda_order2[0]])
-    foot3 = cp.copy(temp[sda_order3[0]])
-    foot4 = cp.copy(temp[sda_order4[0]])
-    for item in sda_order1[1:]:
-        foot1 = np.dot(foot1, temp1[item])
-        foot2 = np.dot(foot2, temp2[item])
-        foot3 = np.dot(foot3, temp3[item])
-        foot4 = np.dot(foot4, temp4[item])
-    footprint[yr,0] = foot1
-    footprint[yr,1] = foot2
-    footprint[yr,2] = foot3
-    footprint[yr,4] = foot4
     
     # format to match function
     sda_vars1[yr] = {}
